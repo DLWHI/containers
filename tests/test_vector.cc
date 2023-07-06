@@ -1,9 +1,7 @@
-// #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <vector>
 
-#include "../containers/s21_vector.h"
+#include <vector>
+#include <dlwhi/vector.h>
 #include "dummy.h"
 
 template <typename T>
@@ -509,10 +507,4 @@ TEST(VectorTest, scenario_utility) {
 
   for (auto i: vec)
     EXPECT_EQ(i, dummyMovable());
-}
-
-int main(int argc, char** argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
 }

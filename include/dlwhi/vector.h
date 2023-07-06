@@ -8,10 +8,10 @@
 #include <type_traits>
 #include <utility>
 
-#include "s21_iterator.h"
+#include "iterator.h"
 
 namespace s21 {
-typedef uint32_t size_t;
+typedef int64_t size_t;
 
 template <typename T>
 class allocator {

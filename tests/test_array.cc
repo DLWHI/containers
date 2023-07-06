@@ -1,9 +1,8 @@
-
 #include <gtest/gtest.h>
 
 #include <array>
 
-#include "../containers/s21_array.h"
+#include <dlwhi/array.h>
 
 TEST(ArrayTest, test0) {
   s21::array<int, 7> s21arr{1, 2, 3, 4, 5, 6, 7};
@@ -62,10 +61,4 @@ TEST(ArrayTest, test1) {
   constexpr size_t max_size_s21arr = s21arr_const.max_size();
   constexpr size_t max_size_arr = arr.max_size();
   EXPECT_EQ(max_size_s21arr, max_size_arr);
-}
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
 }

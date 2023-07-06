@@ -12,7 +12,7 @@ class iterator {
  public:
   typedef std::random_access_iterator_tag iterator_category;
   typedef T value_type;
-  typedef int32_t difference_type;
+  typedef int64_t difference_type;
   typedef T* pointer;
   typedef T& reference;
 
@@ -99,7 +99,7 @@ class reverse_iterator {
  public:
   typedef std::random_access_iterator_tag iterator_category;
   typedef T value_type;
-  typedef int32_t difference_type;
+  typedef int64_t difference_type;
   typedef T* pointer;
   typedef T& reference;
 

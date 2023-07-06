@@ -5,10 +5,10 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "s21_iterator.h"
+#include "iterator.h"
 
 namespace s21 {
-typedef uint32_t size_t;
+typedef int64_t size_t;
 
 // I question this variant of array implementation, but this implementation
 // is almost same as std::array.

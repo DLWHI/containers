@@ -7,16 +7,25 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "/Wall")
 endif()
 
-# set(CMAKE_TOOLCHAIN_FILE "C:/Users/Lord/source/vcpkg/scripts/buildsystems/vcpkg.cmake")
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+)
+
+if (WIN32)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+endif (WIN32)
+FetchContent_MakeAvailable(googletest)
 
 project(containers)
 
-# find_package(GTest REQUIRED)
+set(TEST_SOURCE test_main.cc)
 
-set(TEST_SOURCE main.cc)
-
-add_library(containers STATIC ${SOURCE})
+list(TRANSFORM TEST_SOURCE PREPEND tests/)
 
 add_executable(containers ${TEST_SOURCE})
-
-target_link_libraries(containers s21_matrix)
+target_include_directories(containers PRIVATE "include")
+target_link_libraries(containers GTest::gtest_main)
+include(GoogleTest)
+gtest_discover_tests(containers)

@@ -1,8 +1,7 @@
-#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "../containers/s21_iterator.h"
-#include "../containers/s21_vector.h"
+#include <dlwhi/iterator.h>
+#include <dlwhi/vector.h>
 
 struct IntWrapper {
   int data;
@@ -64,10 +63,4 @@ TEST(RIteratorTest, test0) {
       static_cast<s21::vector<int>::v_creverse_iterator>(vec.crbegin());
   EXPECT_EQ(*it_const, *vec.crbegin());
   EXPECT_EQ(it_const.base(), vec.data() + vec.size() - 1);
-}
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-
-  return RUN_ALL_TESTS();
 }
