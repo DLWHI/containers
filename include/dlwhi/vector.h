@@ -201,8 +201,8 @@ class vector {
   void assign(InputIterator start, InputIterator end);
 
   void reserve(size_t count) {
-    if (count > max_size()) {
-      throw std::length_error("Cannot reserve more than max_size() elements");
+    if (count > max_size() || count < 0) {
+      throw std::length_error("Invalid reserve space");
     } else if (count > capacity_) {
       pointer mem = al.allocate(count);
       al.move_chunk_left(ptr_, ptr_ + size_, mem);
@@ -318,8 +318,8 @@ class vector {
 
 template <typename T>
 void vector<T>::assign(size_t count, const_reference value) {
-  if (count > max_size()) {
-    throw std::length_error("Cannot reserve more than max_size() elements");
+  if (count > max_size() || count < 0) {
+    throw std::length_error("Invalid assign count");
   }
   pointer mem = ptr_;
   al.destroy_multiple(ptr_, size_);
@@ -336,8 +336,8 @@ template <typename T>
 template <typename InputIterator>
 void vector<T>::assign(InputIterator start, InputIterator end) {
   size_t count = std::distance(start, end);
-  if (count > max_size()) {
-    throw std::length_error("Cannot reserve more than max_size() elements");
+  if (count > max_size() || count < 0) {
+    throw std::length_error("Distance between start and end iterators is negative or too big");
   }
   pointer mem = ptr_;
   al.destroy_multiple(mem, size_);
@@ -372,8 +372,8 @@ typename vector<T>::v_iterator vector<T>::forward_insert(v_const_iterator pos,
 template <typename T>
 template <typename... Args>
 void vector<T>::forward_resize(size_t count, Args&&... value) {
-  if (count > max_size()) {
-    throw std::length_error("Cannot reserve more than max_size() elements");
+  if (count > max_size() || count < 0) {
+    throw std::length_error("Invalid resize space");
   }
   if (size_ == count)
     return;
