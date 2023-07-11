@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 
-namespace s21 {
+namespace dlwhi {
 // T - pointer type
 // Container - is not used inside of class, but allows different containers
 //             with same template type produce different iterators

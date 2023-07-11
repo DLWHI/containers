@@ -5,10 +5,8 @@
 #include <dlwhi/array.h>
 
 TEST(ArrayTest, test0) {
-  s21::array<int, 7> s21arr{1, 2, 3, 4, 5, 6, 7};
+  dlwhi::array<int, 7> s21arr{1, 2, 3, 4, 5, 6, 7};
   std::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
-
-  std::cout << s21arr << std::endl;
 
   EXPECT_EQ(s21arr.at(1), arr.at(1));
   EXPECT_EQ(s21arr.at(4), arr.at(4));
@@ -26,7 +24,7 @@ TEST(ArrayTest, test0) {
   auto it = arr.begin();
   for (; s21it != s21arr.end(); it++, s21it++) EXPECT_EQ(*s21it, *it);
 
-  s21::array<int, 7> other{1, 2, 3, 4, 5, 6, 7};
+  dlwhi::array<int, 7> other{1, 2, 3, 4, 5, 6, 7};
   other.swap(s21arr);
   s21it = other.begin();
   for (it = arr.begin(); s21it != other.end(); it++, s21it++)
@@ -38,7 +36,7 @@ TEST(ArrayTest, test0) {
 }
 
 TEST(ArrayTest, test1) {
-  const s21::array<int, 2> s21arr_const{1, 2};
+  const dlwhi::array<int, 2> s21arr_const{1, 2};
   std::array<int, 2> arr{1, 2};
 
   EXPECT_EQ(s21arr_const.at(1), arr.at(1));
@@ -61,4 +59,12 @@ TEST(ArrayTest, test1) {
   constexpr size_t max_size_s21arr = s21arr_const.max_size();
   constexpr size_t max_size_arr = arr.max_size();
   EXPECT_EQ(max_size_s21arr, max_size_arr);
+}
+
+TEST(ArrayTest, scenartio_stream) {
+  dlwhi::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  std::stringstream stream;
+  std::string expected("1 2 3 4 5 6 7");
+  stream << arr;
+  EXPECT_EQ(expected, stream.str());
 }

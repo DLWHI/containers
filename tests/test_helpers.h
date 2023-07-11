@@ -1,6 +1,7 @@
-#ifndef SRC_TESTS_DUMMY_H_
-#define SRC_TESTS_DUMMY_H_
+#ifndef DLWHI_TESTS_TEST_HELPERS_H_
+#define DLWHI_TESTS_TEST_HELPERS_H_
 #include <string>
+#include <memory>
 // This is testing subject class with restrictions
 // Several implementations satisfy different named requirements
 // Vector requires object to be at least
@@ -53,4 +54,18 @@ class dummyMovable : public dummy
     virtual ~dummyMovable() { }
 };
 
-#endif  // SRC_TESTS_DUMMY_H_
+template <typename T>
+class state_allocator : public std::allocator<T> {
+  public:
+    state_allocator(const std::string& state) : std::allocator<T>(), state_(state) {};
+
+    bool operator==(const state_allocator& other) {
+      return state_ == other.state_;
+    }
+    bool operator!=(const state_allocator& other) {
+      return state_ != other.state_;
+    }
+  private:
+    std::string state_;
+};
+#endif  // DLWHI_TESTS_TEST_HELPERS_H_

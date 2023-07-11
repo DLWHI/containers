@@ -8,10 +8,10 @@ struct IntWrapper {
 };
 
 TEST(ItertorTest, test0) {
-  s21::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-  s21::vector<int>::v_iterator it = vec.begin();
-  s21::vector<int>::v_iterator it_cpy_ass = it;
-  s21::vector<int>::v_iterator it_mv(std::move(it));
+  dlwhi::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+  dlwhi::vector<int>::iterator it = vec.begin();
+  dlwhi::vector<int>::iterator it_cpy_ass = it;
+  dlwhi::vector<int>::iterator it_mv(std::move(it));
   EXPECT_EQ(it_cpy_ass, it_mv);
 
   it_mv++;
@@ -27,17 +27,17 @@ TEST(ItertorTest, test0) {
 }
 
 TEST(ItertorTest, test1) {
-  s21::vector<IntWrapper> vec(3);
+  dlwhi::vector<IntWrapper> vec(3);
   vec.front().data = 1;
   vec.back().data = 3;
 
-  s21::vector<IntWrapper>::v_iterator it = --vec.end();
+  dlwhi::vector<IntWrapper>::iterator it = --vec.end();
   EXPECT_EQ(it->data, 3);
 }
 
 TEST(RIteratorTest, test0) {
-  s21::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-  s21::vector<int>::v_reverse_iterator it = vec.rbegin();
+  dlwhi::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
+  dlwhi::vector<int>::const_reverse_iterator it = vec.rbegin();
   auto it_cpy_ass = it;
   auto it_mv(std::move(it));
   EXPECT_EQ(it_cpy_ass, it_mv);
@@ -60,7 +60,7 @@ TEST(RIteratorTest, test0) {
   EXPECT_EQ(it_cpy_ass, it_mv);
 
   auto it_const =
-      static_cast<s21::vector<int>::v_creverse_iterator>(vec.crbegin());
+      static_cast<dlwhi::vector<int>::const_reverse_iterator>(vec.crbegin());
   EXPECT_EQ(*it_const, *vec.crbegin());
   EXPECT_EQ(it_const.base(), vec.data() + vec.size() - 1);
 }

@@ -7,7 +7,7 @@
 
 #include "iterator.h"
 
-namespace s21 {
+namespace dlwhi {
 typedef int64_t size_t;
 
 // I question this variant of array implementation, but this implementation
@@ -24,10 +24,10 @@ struct array {
   typedef T& reference;
   typedef const T& const_reference;
   typedef size_t size_type;
-  typedef iterator<T, array> v_iterator;
-  typedef iterator<const T, array> v_const_iterator;
-  typedef reverse_iterator<T, array> v_reverse_iterator;
-  typedef reverse_iterator<const T, array> v_creverse_iterator;
+  typedef dlwhi::iterator<T, array> iterator;
+  typedef dlwhi::iterator<const T, array> const_iterator;
+  typedef dlwhi::reverse_iterator<T, array> reverse_iterator;
+  typedef dlwhi::reverse_iterator<const T, array> const_reverse_iterator;
 
   constexpr reference at(size_t pos) {
     if (pos >= N) throw std::out_of_range("Accessing element out of bounds");
@@ -51,30 +51,30 @@ struct array {
   constexpr size_t size() const noexcept { return N; }
   constexpr size_t max_size() const noexcept { return N; }
 
-  constexpr v_iterator begin() noexcept { return v_iterator(arr); }
-  constexpr v_const_iterator begin() const noexcept { return cbegin(); }
-  constexpr v_const_iterator cbegin() const noexcept {
-    return v_const_iterator(arr);
+  constexpr iterator begin() noexcept { return iterator(arr); }
+  constexpr const_iterator begin() const noexcept { return cbegin(); }
+  constexpr const_iterator cbegin() const noexcept {
+    return const_iterator(arr);
   }
-  constexpr v_iterator end() noexcept { return v_iterator(arr + N); }
-  constexpr v_const_iterator end() const noexcept { return cend(); }
-  constexpr v_const_iterator cend() const noexcept {
-    return v_const_iterator(arr + N);
+  constexpr iterator end() noexcept { return iterator(arr + N); }
+  constexpr const_iterator end() const noexcept { return cend(); }
+  constexpr const_iterator cend() const noexcept {
+    return const_iterator(arr + N);
   }
 
-  constexpr v_reverse_iterator rbegin() noexcept {
-    return v_reverse_iterator(arr + N - 1);
+  constexpr reverse_iterator rbegin() noexcept {
+    return reverse_iterator(arr + N - 1);
   }
-  constexpr v_creverse_iterator rbegin() const noexcept { return crbegin(); }
-  constexpr v_creverse_iterator crbegin() const noexcept {
-    return v_creverse_iterator(arr + N - 1);
+  constexpr const_reverse_iterator rbegin() const noexcept { return crbegin(); }
+  constexpr const_reverse_iterator crbegin() const noexcept {
+    return const_reverse_iterator(arr + N - 1);
   }
-  constexpr v_reverse_iterator rend() noexcept {
-    return v_reverse_iterator(arr - 1);
+  constexpr reverse_iterator rend() noexcept {
+    return reverse_iterator(arr - 1);
   }
-  constexpr v_creverse_iterator rend() const noexcept { return crend(); }
-  constexpr v_creverse_iterator crend() const noexcept {
-    return v_creverse_iterator(arr - 1);
+  constexpr const_reverse_iterator rend() const noexcept { return crend(); }
+  constexpr const_reverse_iterator crend() const noexcept {
+    return const_reverse_iterator(arr - 1);
   }
 
   constexpr void fill(const_reference value) {
@@ -96,8 +96,9 @@ struct array {
     return true;
   }
 
-  friend std::ostream& operator<<(std::ostream& os, const array& target) {
-    for (size_t i = 0; i < N; i++) os << target.arr[i] << ' ';
+  friend std::ostream& operator<<(std::ostream& os, const array& array) {
+    for (size_t i = 0; i < N - 1; i++) os << array.arr[i] << ' ';
+    os << array.arr[N - 1];
     return os;
   }
 
