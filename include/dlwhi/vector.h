@@ -17,12 +17,12 @@ template <typename T>
 class alloc_wrap {
  public:
   typedef T allocator_type;
-  typedef typename allocator_type::pointer pointer;
+  typedef typename allocator_type::value_type* pointer;
 
   alloc_wrap(const allocator_type& al) : al_(al) { };
 
-  constexpr allocator_type& allocator() { return al_;}
-  constexpr const allocator_type& allocator() const { return al_;}
+  allocator_type& allocator() { return al_;}
+  const allocator_type& allocator() const { return al_;}
 
   void move_chunk_right(pointer left, pointer right, pointer where) {
     where += right - left - 1;
@@ -143,20 +143,16 @@ class vector {
     mem_manager_.allocator().deallocate(ptr_, capacity_);
   }
 
-  constexpr allocator_type get_allocator() { 
+  allocator_type get_allocator() { 
     return allocator_type(mem_manager_.allocator());
   }
 
   reference at(size_t pos) {
-    if (pos >= size_)
-      throw std::out_of_range("Accessing element out of bounds");
-    return ptr_[pos];
+    return (pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   const_reference at(size_t pos) const {
-    if (pos >= size_)
-      throw std::out_of_range("Accessing element out of bounds");
-    return ptr_[pos];
+    return (pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   reference front() noexcept { return ptr_[0]; }
@@ -170,7 +166,7 @@ class vector {
   bool empty() const noexcept { return !size_; }
   size_t size() const noexcept { return size_; }
   size_t max_size() const noexcept {
-    return std::numeric_limits<size_t>::max() / sizeof(value_type);
+    return mem_manager_.allocator().max_size();
   }
   size_t capacity() const noexcept { return capacity_; }
 

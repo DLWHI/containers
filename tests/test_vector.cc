@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <vector>
+#include <list>
 #include <random>
 
 #include <dlwhi/vector.h>
@@ -64,6 +65,19 @@ TEST(VectorTest, ctor_from_stl_vector) {
   dlwhi::vector<dummy> vec(from.begin(), from.end(), not_default);
   EXPECT_EQ(vec.size(), from.size());
   EXPECT_EQ(vec.capacity(), from.capacity());
+  EXPECT_NE(vec.data(), nullptr);
+  EXPECT_EQ(vec.front(), from.front());
+  EXPECT_EQ(vec.back(), from.back());
+}
+
+TEST(VectorTest, ctor_from_stl_list) {
+  size_t random_size = uid(gen);
+  std::allocator<dummy> not_default;
+  std::list<dummy> from(random_size, dummy("not default"));
+
+  dlwhi::vector<dummy> vec(from.begin(), from.end(), not_default);
+  
+  EXPECT_EQ(vec.size(), from.size());
   EXPECT_NE(vec.data(), nullptr);
   EXPECT_EQ(vec.front(), from.front());
   EXPECT_EQ(vec.back(), from.back());
