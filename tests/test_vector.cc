@@ -9,7 +9,7 @@
 #include "test_helpers.h"
 
 std::random_device ran_dev;
-std::uniform_int_distribution<size_t> uid(1, 15);
+std::uniform_int_distribution<size_t> uid(1, 1000);
 std::mt19937 gen(ran_dev());
 
 
@@ -183,111 +183,101 @@ TEST(VectorTest, ctor_ass_move) {
   EXPECT_EQ(vec2.back(), dummy("not default"));
 }
 
-// TEST(VectorTest, scenario_2) {
-//   dlwhi::vector<dummy> dlwhivec(12);
-//   std::vector<dummy> vec(12);
-//   EXPECT_EQ(dlwhivec, vec);
+TEST(VectorTest, comparison_1) {
+  size_t random_size = uid(gen);
+  dlwhi::vector<dummy> vec1(random_size, dummy("equal"));
+  dlwhi::vector<dummy> vec2(random_size, dummy("equal"));
 
-//   dummy one("one");
-//   dlwhivec.push_back(one);
-//   vec.push_back(one);
-//   EXPECT_TRUE(dlwhivec == vec);
+  EXPECT_TRUE(vec1 == vec2);
+  EXPECT_FALSE(vec1 != vec2);
+}
 
-//   dummy two("two");
-//   dlwhivec.push_back(two);
-//   vec.push_back(two);
-//   EXPECT_TRUE(dlwhivec == vec);
+TEST(VectorTest, comparison_2) {
+  dlwhi::vector<dummy> vec1(uid(gen), dummy("not equal"));
+  dlwhi::vector<dummy> vec2(uid(gen), dummy("equal"));
 
-//   dummy three("three");
-//   dummy four("four");
-//   dummy five("five");
-//   dlwhivec.push_back(three);
-//   dlwhivec.push_back(four);
-//   dlwhivec.push_back(five);
-//   vec.push_back(three);
-//   vec.push_back(four);
-//   vec.push_back(five);
-//   EXPECT_TRUE(dlwhivec == vec);
+  EXPECT_FALSE(vec1 == vec2);
+  EXPECT_TRUE(vec1 != vec2);
+}
 
-//   dlwhivec.pop_back();
-//   vec.pop_back();
-//   EXPECT_TRUE(dlwhivec == vec);
+TEST(VectorTest, comparison_empty) {
+  dlwhi::vector<dummy> vec1(uid(gen), dummy("not equal"));
+  dlwhi::vector<dummy> vec2;
 
-//   dummy six("six");
-//   dummy seven("seven");
-//   dlwhivec.push_back(six);
-//   vec.push_back(six);
-//   dlwhivec.push_back(seven);
-//   vec.push_back(seven);
-//   EXPECT_TRUE(dlwhivec == vec);
+  EXPECT_FALSE(vec1 == vec2);
+  EXPECT_TRUE(vec1 != vec2);
+  EXPECT_FALSE(vec2 == vec1);
+  EXPECT_TRUE(vec2 != vec1);
 
-//   dlwhivec.shrink_to_fit();
-//   vec.shrink_to_fit();
-//   EXPECT_TRUE(dlwhivec == vec);
-// }
+  dlwhi::vector<dummy> vec3;
+  dlwhi::vector<dummy> vec4;
 
-// TEST(VectorTest, scenario_3) {
-//   dlwhi::vector<dummyMovable> dlwhivec(12, dummyMovable("was there"));
-//   std::vector<dummyMovable> vec(12, dummyMovable("was there"));
-//   EXPECT_EQ(dlwhivec, vec);
+  EXPECT_TRUE(vec3 == vec4);
+  EXPECT_FALSE(vec3 != vec4);
+}
 
-//   dlwhivec.push_back(dummyMovable("pushed1"));
-//   vec.push_back(dummyMovable("pushed1"));
-//   EXPECT_TRUE(dlwhivec == vec);
+TEST(VectorTest, assign_1) {
+  dlwhi::vector<dummy> vec(uid(gen));
 
-//   dlwhivec.push_back(dummyMovable("pushed2"));
-//   vec.push_back(dummyMovable("pushed2"));
-//   EXPECT_TRUE(dlwhivec == vec);
+  vec.assign(uid(gen), dummy());
+  
+  for (dummy ob: vec) {
+    EXPECT_EQ(ob, dummy());
+  }
+}
 
-//   dlwhivec.push_back(dummyMovable("pushed3"));
-//   vec.push_back(dummyMovable("pushed3"));
-//   dlwhivec.push_back(dummyMovable("pushed4"));
-//   vec.push_back(dummyMovable("pushed4"));
-//   dlwhivec.push_back(dummyMovable("pushed5"));
-//   vec.push_back(dummyMovable("pushed5"));
-//   EXPECT_TRUE(dlwhivec == vec);
+TEST(VectorTest, assign_2) {
+  dlwhi::vector<dummy> vec1(uid(gen));
+  dlwhi::vector<dummy> vec2(uid(gen));
 
-//   dlwhivec.pop_back();
-//   vec.pop_back();
-//   EXPECT_TRUE(dlwhivec == vec);
+  vec1.assign(uid(gen), dummy());
+  vec2.assign(vec1.begin(), vec1.end());
+  
+  EXPECT_EQ(vec1, vec2);
+}
 
-//   dummy six("six");
-//   dummy seven("seven");
-//   dlwhivec.push_back(dummyMovable("pushed6"));
-//   vec.push_back(dummyMovable("pushed6"));
-//   dlwhivec.push_back(dummyMovable("pushed7"));
-//   vec.push_back(dummyMovable("pushed7"));
-//   EXPECT_TRUE(dlwhivec == vec);
+TEST(VectorTest, assign_3) {
+  dlwhi::vector<dummy> vec(uid(gen));
 
-//   dlwhivec.reserve(14);
-//   dlwhivec.reserve(14);
-//   EXPECT_TRUE(dlwhivec == vec);
-// }
+  vec.assign({dummy(), dummy(), dummy(), dummy(), dummy()});
+  
+  for (dummy ob: vec) {
+    EXPECT_EQ(ob, dummy());
+  }
+}
 
-// TEST(VectorTest, scenario_assign_1) {
-//   dlwhi::vector<dummyMovable> dlwhivec(3);
-//   std::vector<dummyMovable> vec(3);
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, assign_invalid_count) {
+  dlwhi::vector<dummy> vec(uid(gen));
 
-//   vec.assign({dummyMovable(), dummyMovable(), dummyMovable(), dummyMovable(),
-//               dummyMovable()});
-//   dlwhivec.assign({dummyMovable(), dummyMovable(), dummyMovable(), dummyMovable(),
-//                  dummyMovable()});
-//   EXPECT_EQ(vec, dlwhivec);
+  EXPECT_THROW(vec.assign(-uid(gen), dummy()),
+               std::length_error);
+}
 
-//   dummyMovable target("what");
-//   dlwhivec.assign(17, target);
-//   vec.assign(17, target);
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, assign_big_count) {
+  dlwhi::vector<dummy> vec(uid(gen));
+  std::allocator<dummy> al;
+  EXPECT_THROW(vec.assign(al.max_size() + 1, dummy()),
+               std::length_error);
+}
 
-//   dlwhivec.clear();
-//   EXPECT_FALSE(vec == dlwhivec);
-//   dlwhivec.assign(vec.begin(), vec.end());
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, assign_invalid_iterators) {
+  dlwhi::vector<dummy> vec(uid(gen));
 
-//   dlwhivec.clear();
-//   EXPECT_ANY_THROW(dlwhivec.assign(vec.end(), vec.begin()));
-// }
+  EXPECT_THROW(vec.assign(vec.end(), vec.begin()),
+               std::length_error);
+}
+
+TEST(VectorTest, assign_randomly) {
+  dlwhi::vector<dummy> vec(uid(gen));
+
+  for (int i = 0; i < 15; i++) {
+    vec.assign(uid(gen), dummy());
+    
+    for (dummy ob: vec) {
+      EXPECT_EQ(ob, dummy());
+    }
+  }
+}
 
 // TEST(VectorTest, scenario_assign_2) {
 //   dlwhi::vector<dummy> dlwhivec(12);

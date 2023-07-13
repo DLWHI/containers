@@ -24,6 +24,9 @@ class alloc_wrap {
   allocator_type& allocator() { return al_;}
   const allocator_type& allocator() const { return al_;}
 
+  pointer allocate(size_t count) { return al_.allocate(count);}
+  void deallocate(pointer ptr_, size_t cap) { al_.deallocate(ptr_, cap);}
+
   void move_chunk_right(pointer left, pointer right, pointer where) {
     where += right - left - 1;
     for (pointer i = right - 1; i != left - 1; i--) {
@@ -39,14 +42,24 @@ class alloc_wrap {
     }
   }
 
+  template <typename... Args>
+  void construct(pointer where, Args&&... args) {
+    al_.construct(where, std::forward<Args>(args)...);
+  }
+
+  void destroy(pointer where) {
+    al_.destroy(where);
+  }
+
   template <typename InputIterator>
   void construct_multiple(pointer where, InputIterator left, InputIterator right) {
-    for (; left != right; left++, where++) al_.construct(where, *left);
+    for (; left != right; left++, where++) 
+      al_.construct(where, *left);
   }
 
   template <typename... Args>
   void construct_multiple(pointer where, size_t count, Args&&... args) {
-    for (size_t i = 0; i < count; i++, where++) al_.construct(where, args...);
+    for (size_t i = 0; i < count; i++, where++) al_.construct(where, std::forward<Args>(args)...);
   }
 
   void destroy_multiple(pointer where, size_t count) {
@@ -90,20 +103,20 @@ class vector {
 
   explicit vector(size_t size, const Allocator& alloc = Allocator()) 
       : size_(size), capacity_(size_), mem_manager_(alloc) {
-    ptr_ = mem_manager_.allocator().allocate(capacity_);
+    ptr_ = mem_manager_.allocate(capacity_);
     mem_manager_.construct_multiple(ptr_, size_);
   };
 
   explicit vector(size_t size, const_reference value, const Allocator& alloc = Allocator())
       : size_(size), capacity_(size_), mem_manager_(alloc) {
-    ptr_ = mem_manager_.allocator().allocate(capacity_);
+    ptr_ = mem_manager_.allocate(capacity_);
     mem_manager_.construct_multiple(ptr_, size_, value);
   };
 
   template <typename InputIterator>
   vector(const InputIterator& start, const InputIterator& end, const Allocator& alloc = Allocator())
       : size_(std::distance(start, end)), capacity_(size_), mem_manager_(alloc) {
-    ptr_ = mem_manager_.allocator().allocate(capacity_);
+    ptr_ = mem_manager_.allocate(capacity_);
     mem_manager_.construct_multiple(ptr_, start, end);
   }
 
@@ -140,7 +153,7 @@ class vector {
 
   virtual ~vector() {
     mem_manager_.destroy_multiple(ptr_, size_);
-    mem_manager_.allocator().deallocate(ptr_, capacity_);
+    mem_manager_.deallocate(ptr_, capacity_);
   }
 
   allocator_type get_allocator() { 
@@ -294,6 +307,10 @@ class vector {
     return true;
   }
 
+  bool operator!=(const vector& other) const {
+    return !(*this == other);
+  }
+
   friend std::ostream& operator<<(std::ostream& os, const vector& vec) {
     for (size_t i = 0; i < vec.size_ - 1; i++) os << vec.ptr_[i] << ' ';
     os << vec.ptr_[vec.size_ - 1];
@@ -303,7 +320,7 @@ class vector {
  private:
   void swap_buffers(pointer temporary) {
     std::swap(temporary, ptr_);
-    mem_manager_.deallocate(temporary);
+    mem_manager_.deallocate(temporary, capacity_);
   }
 
   template <typename Ref>
@@ -327,8 +344,8 @@ void vector<T, Allocator>::assign(size_t count, const_reference value) {
   mem_manager_.destroy_multiple(ptr_, size_);
   if (count > capacity_) {
     mem = mem_manager_.allocate(count);
-    capacity_ = count;
     swap_buffers(mem);
+    capacity_ = count;
   }
   mem_manager_.construct_multiple(mem, count, value);
   size_ = count;
@@ -345,10 +362,10 @@ void vector<T, Allocator>::assign(InputIterator start, InputIterator end) {
   mem_manager_.destroy_multiple(mem, size_);
   if (count > capacity_) {
     mem = mem_manager_.allocate(count);
-    capacity_ = count;
     swap_buffers(mem);
+    capacity_ = count;
   }
-  mem_manager_.construct(mem, start, end);
+  mem_manager_.construct_multiple(mem, start, end);
   size_ = count;
 }
 
