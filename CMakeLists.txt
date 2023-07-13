@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
+project(containers)
+
 set(CMAKE_CXX_STANDARD 17)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS  ${CMAKE_CXX_FLAGS} "-Wall -Werror -Wextra -g -fdiagnostics-color=always")
+    set(CMAKE_CXX_FLAGS  ${CMAKE_CXX_FLAGS} "-g -fdiagnostics-color=always -fsanitize=address")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "/Wall")
 endif()
@@ -17,8 +19,6 @@ if (WIN32)
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 endif (WIN32)
 FetchContent_MakeAvailable(googletest)
-
-project(containers)
 
 set(TEST_SOURCE test_main.cc)
 
