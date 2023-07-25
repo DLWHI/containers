@@ -104,5 +104,23 @@ struct array {
 
   value_type arr[N];
 };
+
+template <typename... Vals>
+constexpr array<typename std::common_type<Vals...>::type, sizeof...(Vals)>
+make_array(Vals&&... values) {
+  return array<typename std::common_type<Vals...>::type, sizeof...(Vals)>({std::forward<T>(values)...})
+}
+
+// template <typename... T>
+// constexpr auto make_array(T&&... values) ->
+//     std::array<
+//        typename std::decay<
+//            typename std::common_type<T...>::type>::type,
+//        sizeof...(T)> {
+//     return std::array<
+//         typename std::decay<
+//             typename std::common_type<T...>::type>::type,
+//         sizeof...(T)>{std::forward<T>(values)...};
+// }
 }  // namespace s21
 #endif  // SRC_CONTAINERS_S21_ARRAY_H_
