@@ -279,7 +279,34 @@ TEST(VectorTest, assign_randomly) {
   }
 }
 
-TEST(VectorTest, reserve_expand) {
+TEST(VectorTest, reserve_expand_not_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::size_t size = uid(gen);
+    dlwhi::vector<dummy> vec(size);
+
+    size += uid(gen);
+    vec.reserve(size);
+    EXPECT_EQ(size, vec.capacity());
+  }
+}
+
+TEST(VectorTest, reserve_shrink_not_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::size_t size = uid(gen);
+    dlwhi::vector<dummy> vec(size);
+
+    size /= uid(gen) + 1;
+    vec.reserve(size);
+    EXPECT_LT(size, vec.capacity());
+  }
+}
+
+TEST(VectorTest, reserve_invalid_not_movable) {
+  dlwhi::vector<dummy> vec(uid(gen));
+  EXPECT_ANY_THROW(vec.reserve(-1));
+}
+
+TEST(VectorTest, reserve_expand_movable) {
   for (int i = 0; i < 15; i++) {
     dlwhi::size_t size = uid(gen);
     dlwhi::vector<dummyMovable> vec(size);
@@ -290,7 +317,7 @@ TEST(VectorTest, reserve_expand) {
   }
 }
 
-TEST(VectorTest, reserve_shrink) {
+TEST(VectorTest, reserve_shrink_movable) {
   for (int i = 0; i < 15; i++) {
     dlwhi::size_t size = uid(gen);
     dlwhi::vector<dummyMovable> vec(size);
@@ -301,160 +328,110 @@ TEST(VectorTest, reserve_shrink) {
   }
 }
 
-TEST(VectorTest, reserve_invalid) {
+TEST(VectorTest, reserve_invalid_movable) {
   dlwhi::vector<dummyMovable> vec(uid(gen));
   EXPECT_ANY_THROW(vec.reserve(-1));
 }
 
-// TEST(VectorTest, scenario_insert) {
-//   dlwhi::vector<dummyMovable> dlwhivec(12);
-//   std::vector<dummyMovable> vec(12);
+TEST(VectorTest, stf_not_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::vector<dummy> vec(uid(gen));
 
-//   dummyMovable target("what");
-//   auto dlwhiit = dlwhivec.begin() + 4;
-//   auto it = vec.begin() + 4;
+    vec.reserve(vec.size() + uid(gen));
+    vec.shrink_to_fit();
+    EXPECT_EQ(vec.size(), vec.capacity());
+  }
+}
 
-//   EXPECT_EQ(*dlwhiit, *it);
-//   it++;
-//   dlwhiit++;
-//   EXPECT_EQ(*dlwhiit, *it);
+TEST(VectorTest, stf_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::vector<dummyMovable> vec(uid(gen));
 
-//   it = vec.insert(it, target);
-//   dlwhiit = dlwhivec.insert(dlwhiit, target);
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(dlwhivec, vec);
+    vec.reserve(vec.size() + uid(gen));
+    vec.shrink_to_fit();
+    EXPECT_EQ(vec.size(), vec.capacity());
+  }
+}
 
-//   it = vec.insert(it, dummyMovable("inserted"));
-//   dlwhiit = dlwhivec.insert(dlwhiit, dummyMovable("inserted"));
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(dlwhivec, vec);
+TEST(VectorTest, clear) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::vector<dummy> vec(uid(gen), dummy("dirty"));
 
-//   it = vec.insert(vec.begin() + 7, dummyMovable("second inserted"));
-//   dlwhiit = dlwhivec.insert(dlwhivec.begin() + 7, dummyMovable("second inserted"));
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(dlwhivec, vec);
+    vec.clear();
+    EXPECT_EQ(vec.size(), 0);
+  }
+}
 
-//   it = vec.erase(it);
-//   dlwhiit = dlwhivec.erase(dlwhiit);
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(dlwhivec, vec);
-// }
+TEST(VectorTest, resize_expand_not_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::size_t size = uid(gen);
+    dlwhi::vector<dummy> vec(size, dummy("default"));
 
-// TEST(VectorTest, scenario_resize) {
-//   dlwhi::vector<dummyMovable> dlwhivec{
-//       dummyMovable("not default"), dummyMovable("not default"),
-//       dummyMovable("not default"), dummyMovable("not default"),
-//       dummyMovable("not default")};
-//   std::vector<dummyMovable> vec{
-//       dummyMovable("not default"), dummyMovable("not default"),
-//       dummyMovable("not default"), dummyMovable("not default"),
-//       dummyMovable("not default")};
+    size += uid(gen);
+    vec.resize(size, dummy("appended"));
+    EXPECT_EQ(size, vec.capacity());
+    EXPECT_EQ(dummy("appended"), vec.back());
+  }
+}
 
-//   dlwhivec.resize(33);
-//   vec.resize(33);
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, resize_shrink_not_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::size_t size = uid(gen);
+    dlwhi::vector<dummy> vec(size);
 
-//   dlwhivec.resize(17);
-//   vec.resize(17);
-//   EXPECT_EQ(vec, dlwhivec);
+    size /= uid(gen) + 1;
+    vec.resize(size);
+    EXPECT_LT(size, vec.capacity());
+  }
+}
 
-//   dlwhivec.resize(3);
-//   vec.resize(3);
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, resize_invalid_not_movable) {
+  dlwhi::vector<dummy> vec(uid(gen));
+  EXPECT_THROW(vec.resize(-1, dummy("dolbaeb")),
+               std::length_error);
+}
 
-//   dlwhivec.resize(7, dummyMovable("nd"));
-//   vec.resize(7, dummyMovable("nd"));
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, resize_expand_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::size_t size = uid(gen);
+    dlwhi::vector<dummyMovable> vec(size, dummyMovable("default"));
 
-//   dlwhivec.resize(7);
-//   vec.resize(7);
-//   EXPECT_EQ(vec, dlwhivec);
+    size += uid(gen);
+    vec.resize(size);
+    EXPECT_EQ(size, vec.capacity());
+    EXPECT_EQ(dummyMovable(), vec.back());
+  }
+}
 
-//   dlwhivec.resize(8, dummyMovable("that one is mine"));
-//   vec.resize(8, dummyMovable("that one is mine"));
-//   EXPECT_EQ(vec, dlwhivec);
+TEST(VectorTest, resize_shrink_movable) {
+  for (int i = 0; i < 15; i++) {
+    dlwhi::size_t size = uid(gen);
+    dlwhi::vector<dummyMovable> vec(size);
 
-//   EXPECT_ANY_THROW(dlwhivec.resize(-1));
-// }
+    size /= uid(gen) + 1;
+    vec.resize(size, dummyMovable("trick"));
+    EXPECT_LT(size, vec.capacity());
+    EXPECT_NE(dummyMovable("trick"), vec.back());
+  }
+}
 
+TEST(VectorTest, resize_invalid_movable) {
+  dlwhi::vector<dummyMovable> vec(uid(gen));
+  EXPECT_THROW(vec.resize(-1, dummyMovable("you knew it")),
+               std::length_error);
+}
 
-
-// TEST(VectorTest, scenario_emplace) {
-//   dlwhi::vector<dummyMovable> dlwhivec;
-//   std::vector<dummyMovable> vec;
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhivec.emplace_back(dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhivec.emplace_back(dummyMovable(), dummyMovable(), dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   auto dlwhiit =
-//       dlwhivec.emplace(dlwhivec.begin() + 1, dummyMovable(), dummyMovable());
-//   auto it = vec.emplace(vec.begin() + 1, dummyMovable());
-//   vec.emplace(vec.begin() + 1, dummyMovable());
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhiit = dlwhivec.emplace(dlwhivec.begin(), dummyMovable("occupied in thoughts"));
-//   it = vec.emplace(vec.begin(), dummyMovable("occupied in thoughts"));
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhiit = dlwhivec.erase(dlwhivec.begin() + 2);
-//   it = vec.erase(vec.begin() + 2);
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhiit = dlwhivec.erase(dlwhivec.end() - 1);
-//   it = vec.erase(vec.end() - 1);
-//   EXPECT_EQ(vec, dlwhivec);
-//   EXPECT_EQ(dlwhiit, dlwhivec.end());
-// }
-
-// TEST(VectorTest, scenario_insert_many) {
-//   dlwhi::vector<dummyMovable> dlwhivec;
-//   std::vector<dummyMovable> vec;
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhivec.insert_many_back(dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhivec.insert_many_back(dummyMovable(), dummyMovable(), dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   vec.emplace_back(dummyMovable());
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   auto dlwhiit =
-//       dlwhivec.insert_many(dlwhivec.begin() + 1, dummyMovable(), dummyMovable());
-//   auto it = vec.emplace(vec.begin() + 1, dummyMovable());
-//   vec.emplace(vec.begin() + 1, dummyMovable());
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhiit =
-//       dlwhivec.insert_many(dlwhivec.begin(), dummyMovable("occupied in thoughts"));
-//   it = vec.emplace(vec.begin(), dummyMovable("occupied in thoughts"));
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhiit = dlwhivec.erase(dlwhivec.begin() + 2);
-//   it = vec.erase(vec.begin() + 2);
-//   EXPECT_EQ(*dlwhiit, *it);
-//   EXPECT_EQ(vec, dlwhivec);
-
-//   dlwhiit = dlwhivec.erase(dlwhivec.end() - 1);
-//   it = vec.erase(vec.end() - 1);
-//   EXPECT_EQ(vec, dlwhivec);
-//   EXPECT_EQ(dlwhiit, dlwhivec.end());
-// }
+TEST(VectorTest, insert_not_movable_1) {
+  int insert_count = std::min(static_cast<int>(uid(gen)), 15);
+  dummy insert_val("inserted");
+  dlwhi::vector<dummy> vec(uid(gen), dummy("default"));
+  std::uniform_int_distribution<dlwhi::size_t> uid_vec(0, vec.size());
+  for (int i = 0; i < insert_count; i++) {
+    auto insert_pos = vec.begin() + uid_vec(gen);
+    insert_pos = vec.insert(insert_pos, insert_val);
+    EXPECT_EQ(*insert_pos, insert_val);
+  }
+}
 
 // TEST(VectorTest, scenario_access_1) {
 //   const dlwhi::vector<dummyMovable> dlwhivecConst{
@@ -552,56 +529,16 @@ TEST(VectorTest, reserve_invalid) {
 //   EXPECT_EQ(vec, dlwhivec);
 // }
 
-// TEST(VectorTest, scenario_ctors) {
-//   dlwhi::vector<dummyMovable> vec{
-//       dummyMovable("Aileen"), dummyMovable("Anna"),  dummyMovable("Louie"),
-//       dummyMovable("Noel"),   dummyMovable("Grace"),
-//   };
-//   dlwhi::vector<dummyMovable> cpy(vec);
-//   EXPECT_EQ(vec, cpy);
-//   dlwhi::vector<dummyMovable> mv(std::move(vec));
-//   EXPECT_EQ(mv, cpy);
-
-//   dlwhi::vector<dummyMovable> cpy_ass;
-//   cpy_ass = cpy;
-//   dlwhi::vector<dummyMovable> mv_ass;
-//   mv_ass = std::move(mv);
-//   EXPECT_EQ(mv_ass, cpy_ass);
-// }
-
-// TEST(VectorTest, scenario_utility) {
-//   dlwhi::vector<dummyMovable> vec{
-//       dummyMovable("Aileen"), dummyMovable("Anna"),  dummyMovable("Louie"),
-//       dummyMovable("Noel"),   dummyMovable("Grace"),
-//   };
-
-//   EXPECT_FALSE(vec.empty());
-//   vec.clear();
-//   EXPECT_TRUE(vec.empty());
-
-//   EXPECT_NE(vec.data(), nullptr);
-
-//   dlwhi::vector<dummyMovable> other{
-//       dummyMovable(),
-//       dummyMovable(),
-//       dummyMovable(),
-//   };
-
-//   vec.swap(other);
-
-//   for (auto i : vec) EXPECT_EQ(i, dummyMovable());
-// }
-
-// TEST(VectorTest, scenario_stream) {
-//   dlwhi::vector<dummyMovable> vec{
-//       dummyMovable("Aileen"), dummyMovable("Anna"),  dummyMovable("Louie"),
-//       dummyMovable("Noel"),   dummyMovable("Grace"),
-//   };
-//   std::stringstream stream;
-//   std::string expected("Aileen Anna Louie Noel Grace");
-//   stream << vec;
-//   EXPECT_EQ(expected, stream.str());
-// }
+TEST(VectorTest, stream) {
+  dlwhi::vector<dummyMovable> vec{
+      dummyMovable("Aileen"), dummyMovable("Anna"),  dummyMovable("Louie"),
+      dummyMovable("Noel"),   dummyMovable("Grace"),
+  };
+  std::stringstream stream;
+  std::string expected("Aileen Anna Louie Noel Grace");
+  stream << vec;
+  EXPECT_EQ(expected, stream.str());
+}
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
