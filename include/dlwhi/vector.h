@@ -14,7 +14,7 @@
 namespace dlwhi {
 typedef int64_t size_t;
 
-// Requires T to be at least CopyConstructible and CopyASSignable
+// Requires T to be at least CopyConstructible
 template <typename T, class Allocator = std::allocator<T>>
 class vector {
  public:
@@ -26,6 +26,7 @@ class vector {
   typedef T&& move_reference;
 
   typedef Allocator allocator_type;
+  typedef std::allocator_traits<allocator_type> al_traits;
 
   typedef dlwhi::iterator<T, vector> iterator;
   typedef dlwhi::iterator<const T, vector> const_iterator;
@@ -140,7 +141,7 @@ class vector {
   constexpr dlwhi::size_t size() const noexcept { return size_; }
   constexpr dlwhi::size_t capacity() const noexcept { return capacity_; }
   constexpr dlwhi::size_t max_size() const noexcept {
-    return std::allocator_traits<Allocator>::max_size(al_);
+    return al_traits::max_size(al_);
   }
 
   constexpr void assign(std::initializer_list<value_type> values) {
@@ -182,11 +183,11 @@ class vector {
   constexpr void resize(dlwhi::size_t count, const_reference value);
 
   constexpr void push_back(const_reference value) { 
-    insert(end(), std::forward<const value_type>(value));
+    place_at(end(), std::forward<const value_type>(value));
   }
 
   constexpr void push_back(move_reference value) { 
-    insert(end(), std::forward<value_type>(value));
+    place_at(end(), std::forward<value_type>(value));
   }
 
   constexpr void pop_back() {
@@ -195,16 +196,16 @@ class vector {
   }
 
   constexpr iterator insert(const_iterator pos, const_reference value) {
-    return forward_insert<const_reference>(pos, std::forward<const value_type>(value));
+    return place_at<const_reference>(pos, std::forward<const value_type>(value));
   }
 
   constexpr iterator insert(const_iterator pos, move_reference value) {
-    return forward_insert<move_reference>(pos, std::forward<value_type>(value));
+    return place_at<move_reference>(pos, std::forward<value_type>(value));
   }
 
   constexpr iterator erase(const_iterator pos) {
     pointer dest = ptr_ + (pos - begin());
-    std::destroy_at(pos().base());
+    al_traits::destroy(al_, dest);
     move_chunk_left(dest + 1, end().base(), dest);
     size_--;
     return iterator(dest);
@@ -212,12 +213,12 @@ class vector {
 
   template <typename... Args>
   constexpr iterator emplace(const_iterator pos, Args&&... values) {
-    return insert_many(pos, values...);
+    return place_at<Args...>(pos, std::forward<Args>(values)...);
   }
 
   template <typename... Args>
   constexpr void emplace_back(Args&&... values) {
-    insert_many(end(), values...);
+    place_at(end(), std::forward<Args>(values)...);
   }
 
   constexpr void swap(vector& other) noexcept { *this = std::move(other); }
@@ -246,13 +247,13 @@ class vector {
   template <typename InputIterator>
   constexpr void construct_multiple(pointer where, InputIterator left, InputIterator right) {
     for (; left != right; left++, where++) 
-      std::construct_at(where, *left);
+      al_traits::construct(al_, where, *left);
   }
 
   template <typename... Args>
   constexpr void construct_multiple(pointer where, dlwhi::size_t count, Args&&... args) {
     for (dlwhi::size_t i = 0; i < count; i++, where++) 
-      std::construct_at(where, std::forward<Args>(args)...);
+      al_traits::construct(al_, where, std::forward<Args>(args)...);
   }
 
   constexpr void destroy_multiple(pointer start, dlwhi::size_t count) {
@@ -262,19 +263,19 @@ class vector {
   constexpr void move_chunk_left(pointer left, pointer right, pointer where) {
     for (; left != right; left++, where++) {
       if constexpr (std::is_move_constructible<T>::value)
-        std::construct_at(where, std::move(*left));
+        al_traits::construct(al_, where, std::move(*left));
       else
-        std::construct_at(where, *left);
+        al_traits::construct(al_, where, *left);
       left->~T();
     }
   }
 
   constexpr void move_chunk_right(pointer left, pointer right, pointer where) {
-    for (right--, where += right - left; right != left - 1; right--) {
+    for (right--, where += right - left; right >= left; right--, where--) {
       if constexpr (std::is_move_constructible<T>::value)
-        std::construct_at(where, std::move(*right));
+        al_traits::construct(al_, where, std::move(*right));
       else
-        std::construct_at(where, *right);
+        al_traits::construct(al_, where, *right);
       right->~T();
     }
   }
@@ -284,8 +285,8 @@ class vector {
     al_.deallocate(temporary, capacity_);
   }
 
-  template <typename Ref>
-  constexpr iterator forward_insert(const_iterator where, Ref value);
+  template <typename... Args>
+  constexpr iterator place_at(const_iterator pos, Args&&... value);
 
   dlwhi::size_t size_;
   dlwhi::size_t capacity_;
@@ -349,21 +350,22 @@ constexpr void vector<T, Allocator>::resize(dlwhi::size_t count, const_reference
 }
 
 template <typename T, class Allocator>
-template <typename Ref>
-constexpr vector<T, Allocator>::iterator 
-vector<T, Allocator>::forward_insert(const_iterator pos,
-                                      Ref value) {
+template <typename... Args>
+constexpr typename vector<T, Allocator>::iterator 
+vector<T, Allocator>::place_at(const_iterator pos,
+                               Args&&... value) {
   dlwhi::size_t delta = pos - begin();
   if (size_ >= capacity_) {
     pointer mem = al_.allocate(std::max(capacity_ * kCapMul, size_ + 1));
+    al_traits::construct(al_, mem + delta, std::forward<Args>(value)...);
     move_chunk_left(ptr_, ptr_ + delta, mem);
     move_chunk_left(ptr_ + delta, ptr_ + size_, mem + delta + 1);
     swap_buffers(mem);
     capacity_ = std::max(capacity_ * kCapMul, size_ + 1);
   } else {
     move_chunk_right(ptr_ + delta, end().base(), ptr_ + delta + 1);
+    al_traits::construct(al_, ptr_ + delta, std::forward<Args>(value)...);
   }
-  std::construct_at(ptr_ + delta, std::forward<Ref>(value));
   size_++;
   return iterator(ptr_ + delta);
 }

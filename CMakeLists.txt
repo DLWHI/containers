@@ -3,10 +3,6 @@ project(containers)
 
 set(CMAKE_CXX_STANDARD 20)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS  ${CMAKE_CXX_FLAGS} "-Wall -Werror -Wextra -g -fdiagnostics-color=always -fsanitize=address")
-endif()
-
 include_directories(include)
 
 include(FetchContent)
@@ -21,6 +17,13 @@ endif (WIN32)
 FetchContent_MakeAvailable(googletest)
 
 enable_testing()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+  add_compile_options(-Wall -Werror -Wextra -g -fdiagnostics-color=always -fsanitize=address)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
+  add_compile_options(/fsanitize=address)
+endif()
+
 
 add_executable(
   test_vector

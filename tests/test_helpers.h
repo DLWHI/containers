@@ -8,24 +8,20 @@
 // CopyAssignable, CopyConstructible and Erasable
 // Some methods could alse require MoveAssignable and MoveConstructible
 
-// CopyAssignable, CopyConstructible and Erasable dummy
-class dummy
+// CopyConstructible and Erasable dummy
+class dummyCpy
 {
   public:
-    dummy() : id_("default"), leak_(new int()) { };
-    dummy(const std::string& name) : id_(name), leak_(new int()) { };
-    dummy(dummy&& other) = delete;
-    dummy(const dummy& other) : id_(other.id_), leak_(new int()) { };
-    dummy& operator=(const dummy& other) {
-      id_ = other.id_; 
-      return *this;
-    }
-    virtual ~dummy() { delete leak_;}
+    dummyCpy() : id_("default"), leak_(new int()) { };
+    explicit dummyCpy(const std::string& name) : id_(name), leak_(new int()) { };
+    dummyCpy(dummyCpy&& other) = delete;
+    dummyCpy(const dummyCpy& other) : id_(other.id_), leak_(new int()) { };
+    virtual ~dummyCpy() { delete leak_;}
 
-    bool operator==(const dummy& other) const { return other.id_ == id_;}
-    bool operator!=(const dummy& other) const { return other.id_ != id_;}
+    bool operator==(const dummyCpy& other) const { return other.id_ == id_;}
+    bool operator!=(const dummyCpy& other) const { return other.id_ != id_;}
 
-    friend std::ostream& operator<<(std::ostream& os, const dummy& obj) {
+    friend std::ostream& operator<<(std::ostream& os, const dummyCpy& obj) {
       os << obj.id_;
       return os;
     }
@@ -35,23 +31,20 @@ class dummy
 };
 
 // + MoveAssignable and MoveConstructible dummy
-class dummyMovable : public dummy
+class dummyMv : public dummyCpy
 {
   public:
-    dummyMovable() : dummy() { };
-    dummyMovable(const std::string& name) : dummy(name) { };
-    dummyMovable(const dummyMovable& other) : dummy(other.id_) { };
+    dummyMv() : dummyCpy() { };
+    explicit dummyMv(const std::string& name) : dummyCpy(name) { };
+    dummyMv(const dummyMv& other) : dummyCpy(other.id_) { };
     // speed dies as this is test class
-    dummyMovable(dummyMovable&& other) { 
+    dummyMv(dummyMv&& other) { 
       id_ = std::move(other.id_);
       delete leak_;
       leak_ = other.leak_;
       other.leak_ = nullptr;
     }
-    dummyMovable& operator=(dummyMovable&& other) { std::swap(leak_, other.leak_); id_ = std::move(other.id_); return *this;}
-    dummyMovable& operator=(const dummyMovable& other) { dummy::operator=(other); return *this;}
-
-    virtual ~dummyMovable() { }
+    virtual ~dummyMv() { }
 };
 
 template <typename T>
