@@ -216,6 +216,40 @@ TEST(VectorTest, comparison_empty) {
   EXPECT_FALSE(vec3 != vec4);
 }
 
+TEST(VectorTest, random_access) {
+  dlwhi::vector<int> vec(uid(gen));
+  for (int i = 0; i < vec.size(); i++) {
+    EXPECT_EQ(vec[i], 0);
+    vec[i] = i + 1;
+  }
+  for (int i = 0; i < vec.size(); i++) {
+    EXPECT_EQ(vec[i], i + 1);
+  }
+}
+
+TEST(VectorTest, random_access_bounds) {
+  dlwhi::vector<int> vec(uid(gen));
+  for (int i = 0; i < vec.size(); i++) {
+    EXPECT_EQ(vec.at(i), 0);
+    vec.at(i) = i + 1;
+  }
+  for (int i = 0; i < vec.size(); i++) {
+    EXPECT_EQ(vec.at(i), i + 1);
+  }
+  EXPECT_THROW(vec.at(-1), std::out_of_range);
+  EXPECT_THROW(vec.at(vec.size()), std::out_of_range);
+}
+
+TEST(VectorTest, front_back_access) {
+  dlwhi::vector<int> vec(uid(gen));
+  for (int i = 0; i < vec.size(); i++) {
+    EXPECT_EQ(vec[i], 0);
+    vec[i] = i + 1;
+  }
+  EXPECT_EQ(vec.front(), 1);
+  EXPECT_EQ(vec.back(), vec.size());
+}
+
 TEST(VectorTest, assign_1) {
   dlwhi::vector<dummyCpy> vec(uid(gen));
 
