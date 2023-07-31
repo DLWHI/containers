@@ -8,11 +8,20 @@
 #include <dlwhi/vector.h>
 #include "test_helpers.h"
 
+// TODO:
+//  Add swap tests (but 69 nice)
+
+
 std::random_device ran_dev;
 std::uniform_int_distribution<dlwhi::size_t> uid(1, 1000);
 std::mt19937 gen(ran_dev());
 
-constexpr int loop = 100;
+#ifdef LOOP_COUNT
+constexpr int loop = LOOP_COUNT;
+#else
+constexpr int loop = 50;
+#endif
+
 
 TEST(VectorTest, ctor_default) {
   dlwhi::vector<dummyCpy> vec;
@@ -144,8 +153,8 @@ TEST(VectorTest, ctor_move) {
 TEST(VectorTest, ctor_move_alloc_not_default) {
   dlwhi::size_t random_size = uid(gen);
   state_allocator<dummyCpy> not_default("not default");
-  dlwhi::vector<dummyCpy> vec1(random_size, dummyCpy("not default"), state_allocator<dummyCpy>("default"));
-  dlwhi::vector<dummyCpy> vec2(std::move(vec1), not_default);
+  dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec1(random_size, dummyCpy("not default"), state_allocator<dummyCpy>("default"));
+  dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec2(std::move(vec1), not_default);
 
   EXPECT_EQ(vec2.size(), random_size);
   EXPECT_EQ(vec2.capacity(), random_size);
@@ -346,6 +355,7 @@ TEST(VectorTest, reserve_expand_movable) {
     size += uid(gen);
     vec.reserve(size);
     EXPECT_EQ(size, vec.capacity());
+    EXPECT_EQ(dummyMv::Constructed::kMove, vec.front().birth);
   }
 }
 
@@ -380,6 +390,8 @@ TEST(VectorTest, stf_movable) {
     vec.reserve(vec.size() + uid(gen));
     vec.shrink_to_fit();
     EXPECT_EQ(vec.size(), vec.capacity());
+    EXPECT_EQ(dummyMv::Constructed::kMove, vec.back().birth);
+    EXPECT_EQ(dummyMv::Constructed::kMove, vec.front().birth);
   }
 }
 
@@ -418,7 +430,7 @@ TEST(VectorTest, resize_shrink_not_movable) {
     dlwhi::size_t size = uid(gen);
     dlwhi::vector<dummyCpy> vec(size);
 
-    size = (1 + size) / (1 + uid(gen));
+    size = 1 + size / (1 + uid(gen));
     vec.resize(size);
     EXPECT_LE(size, vec.capacity());
   }
@@ -455,6 +467,7 @@ TEST(VectorTest, resize_expand_movable) {
     vec.resize(size);
     EXPECT_EQ(size, vec.capacity());
     EXPECT_EQ(dummyMv(), vec.back());
+    EXPECT_EQ(dummyMv::Constructed::kMove, vec.front().birth);
   }
 }
 
@@ -463,7 +476,7 @@ TEST(VectorTest, resize_shrink_movable) {
     dlwhi::size_t size = uid(gen), old_size;
     dlwhi::vector<dummyMv> vec(size);
     old_size = vec.size();
-    size = (1 + size) / (1 + uid(gen));
+    size = 1 + size / (1 + uid(gen));
     vec.resize(size, dummyMv("trick"));
     EXPECT_LE(size, vec.capacity());
     EXPECT_NE(dummyMv("trick"), vec.back());
@@ -667,6 +680,7 @@ TEST(VectorTest, emplace_movable_1) {
     auto insert_pos = vec.begin() + uid_vec(gen);
     insert_pos = vec.emplace(insert_pos, "inserted");
     EXPECT_EQ(*insert_pos, dummyMv("inserted"));
+    EXPECT_EQ(dummyMv::Constructed::kParam, insert_pos->birth);
   }
 }
 
@@ -677,6 +691,7 @@ TEST(VectorTest, emplace_movable_2) {
     auto insert_pos = vec.begin() + uid_vec(gen);
     insert_pos = vec.emplace(insert_pos, "inserted");
     EXPECT_EQ(*insert_pos, dummyMv("inserted"));
+    EXPECT_EQ(dummyMv::Constructed::kParam, insert_pos->birth);
   }
 }
 
@@ -687,6 +702,7 @@ TEST(VectorTest, emplace_from_begin) {
     auto insert_pos = vec.begin() + uid_vec(gen);
     insert_pos = vec.emplace(insert_pos, std::move(vec.front()));
     EXPECT_NE(vec.front(), dummyMv("default"));
+    EXPECT_EQ(dummyMv::Constructed::kMove, insert_pos->birth);
   }
 }
 
@@ -695,6 +711,7 @@ TEST(VectorTest, emplace_back_from_begin) {
     dlwhi::vector<dummyMv> vec(uid(gen), dummyMv("default"));
     vec.emplace_back(std::move(vec.front()));
     EXPECT_EQ(vec.back(), dummyMv("default"));
+    EXPECT_EQ(vec.back().birth, dummyMv::Constructed::kMove);
     EXPECT_NE(vec.front(), dummyMv("default"));
   }
 }
@@ -711,6 +728,7 @@ TEST(VectorTest, emplace_back_vector) {
   }
   for (dlwhi::size_t i = size; i < 2*size; i++) {
     EXPECT_EQ(vec[i], dummyMv("default"));
+    EXPECT_EQ(vec.back().birth, dummyMv::Constructed::kMove);
   }
 }
 
