@@ -1,5 +1,6 @@
 #ifndef SRC_CONTAINERS_S21_ITERATOR_H_
 #define SRC_CONTAINERS_S21_ITERATOR_H_
+#include <iterator>
 #include <algorithm>
 #include <cstdint>
 

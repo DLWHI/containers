@@ -1,29 +1,48 @@
 #ifndef SRC_CONTAINERS_S21_LIST_H_
 #define SRC_CONTAINERS_S21_LIST_H_
 
-// #include <iostream>
-// #include <ostream>
-#include <cstddef>
+#include <cstdint>
+#include <initializer_list>
+#include <limits>
+#include <memory>
+#include <ostream>
 #include <stdexcept>
+#include <type_traits>
+#include <utility>
 
-namespace s21 {
-template <typename T>
-
+namespace dlwhi {
+template <typename T, typename Allocator = std::allocator<T>>
 class list {
   // Forward declaration:
   struct Node;
 
  public:
   // Forward declaration:
-  template <typename TI>
+  template <typename U>
   class ListIterator;
 
   typedef T value_type;
+  // typedef T* pointer;
   typedef T& reference;
   typedef const T& const_reference;
   typedef ListIterator<Node> iterator;
   typedef ListIterator<const Node> const_iterator;
   typedef size_t size_type;
+
+  // typedef T value_type;
+  // typedef T* pointer;
+  // typedef const T* const_pointer;
+  // typedef T& reference;
+  // typedef const T& const_reference;
+  // typedef T&& move_reference;
+
+  // typedef Allocator allocator_type;
+  // typedef std::allocator_traits<allocator_type> al_traits;
+
+  // typedef dlwhi::iterator<T, vector> iterator;
+  // typedef dlwhi::iterator<const T, vector> const_iterator;
+  // typedef dlwhi::reverse_iterator<T, vector> reverse_iterator;
+  // typedef dlwhi::reverse_iterator<const T, vector> const_reverse_iterator;
 
   // Default constructor
   list() : head_{0, &head_, &head_}, counter_(0){};
@@ -351,7 +370,7 @@ class list {
       return ListIterator<const TI>(ptr_);
     }
 
-    T& operator*() { return ptr_->data_; }
+    TI& operator*() { return ptr_->data_; }
 
    private:
     TI* ptr_;
