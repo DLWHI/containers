@@ -143,16 +143,16 @@ class vector {
     return al_traits::max_size(al_);
   }
 
-  constexpr void assign(std::initializer_list<value_type> values) {
-    assign(values.begin(), values.end());
+  constexpr vector& assign(std::initializer_list<value_type> values) {
+    return assign(values.begin(), values.end());
   }
 
-  constexpr void assign(dlwhi::size_t count, const_reference value);
+  constexpr vector& assign(dlwhi::size_t count, const_reference value);
 
   template <typename InputIterator>
-  constexpr void assign(InputIterator start, InputIterator end);
+  constexpr vector& assign(InputIterator start, InputIterator end);
 
-  constexpr void reserve(dlwhi::size_t count) {
+  constexpr vector& reserve(dlwhi::size_t count) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid reserve space");
     } else if (count > capacity_) {
@@ -161,37 +161,43 @@ class vector {
       swap_buffers(mem);
       capacity_ = count;
     }
+    return *this;
   }
 
-  constexpr void shrink_to_fit() {
+  constexpr vector& shrink_to_fit() {
     if (size_ < capacity_) {
       pointer mem = al_.allocate(size_);
       move_chunk_left(ptr_, ptr_ + size_, mem);
       swap_buffers(mem);
       capacity_ = size_;
     }
+    return *this;
   }
 
-  constexpr void clear() {
+  constexpr vector& clear() {
     destroy_multiple(ptr_, size_);
     size_ = 0;
+    return *this;
   }
 
-  constexpr void resize(dlwhi::size_t count) { resize(count, value_type()); }
+  constexpr vector& resize(dlwhi::size_t count) { return resize(count, value_type()); }
 
-  constexpr void resize(dlwhi::size_t count, const_reference value);
+  constexpr vector& resize(dlwhi::size_t count, const_reference value);
 
-  constexpr void push_back(const_reference value) { 
+  constexpr vector& push_back(const_reference value) { 
     place_at(end(), std::forward<const value_type>(value));
+    return *this;
   }
 
-  constexpr void push_back(move_reference value) { 
+  constexpr vector& push_back(move_reference value) { 
     place_at(end(), std::forward<value_type>(value));
+    return *this;
   }
 
-  constexpr void pop_back() {
+  constexpr vector& pop_back() {
     size_--;
-    std::destroy_at(ptr_ + size_);
+    al_traits::destroy(al_, ptr_ + size_);
+    return *this;
   }
 
   constexpr iterator insert(const_iterator pos, const_reference value) {
@@ -216,20 +222,22 @@ class vector {
   }
 
   template <typename... Args>
-  constexpr void emplace_back(Args&&... values) {
+  constexpr vector& emplace_back(Args&&... values) {
     place_at(end(), std::forward<Args>(values)...);
+    return *this;
   }
 
   constexpr reference operator[](dlwhi::size_t i) { return ptr_[i]; }
   constexpr value_type operator[](dlwhi::size_t i) const { return ptr_[i]; }
 
-  constexpr void  swap(vector& other) noexcept(al_traits::propagate_on_container_swap::value
+  constexpr vector& swap(vector& other) noexcept(al_traits::propagate_on_container_swap::value
                                               || al_traits::is_always_equal::value) {
     if constexpr (al_traits::propagate_on_container_swap::value)
       std::swap(al_, other.al_);
     std::swap(ptr_, other.ptr_);
     std::swap(size_, other.size_);
     std::swap(capacity_, other.capacity_);
+    return *this;
   }
 
   constexpr bool operator==(const vector& other) const {
@@ -263,7 +271,7 @@ class vector {
   }
 
   constexpr void destroy_multiple(pointer start, dlwhi::size_t count) {
-    for (dlwhi::size_t i = 0; i < count; ++i, ++start) std::destroy_at(start);
+    for (dlwhi::size_t i = 0; i < count; ++i, ++start) al_traits::destroy(al_, start);
   }
 
   constexpr void move_chunk_left(pointer left, pointer right, pointer where) {
@@ -272,7 +280,7 @@ class vector {
         al_traits::construct(al_, where, std::move(*left));
       else
         al_traits::construct(al_, where, *left);
-      left->~T();
+      al_traits::destroy(al_, left);
     }
   }
 
@@ -282,7 +290,7 @@ class vector {
         al_traits::construct(al_, where, std::move(*right));
       else
         al_traits::construct(al_, where, *right);
-      right->~T();
+      al_traits::destroy(al_, right);
     }
   }
 
@@ -301,7 +309,8 @@ class vector {
 };
 
 template <typename T, class Allocator>
-constexpr void vector<T, Allocator>::assign(dlwhi::size_t count, const_reference value) {
+constexpr vector<T, Allocator>&
+vector<T, Allocator>::assign(dlwhi::size_t count, const_reference value) {
   if (count > max_size() || count < 0) {
     throw std::length_error("Invalid assign count");
   }
@@ -314,11 +323,13 @@ constexpr void vector<T, Allocator>::assign(dlwhi::size_t count, const_reference
   }
   construct_multiple(mem, count, value);
   size_ = count;
+  return *this;
 }
 
 template <typename T, class Allocator>
 template <typename InputIterator>
-constexpr void vector<T, Allocator>::assign(InputIterator start, InputIterator end) {
+constexpr vector<T, Allocator>&
+vector<T, Allocator>::assign(InputIterator start, InputIterator end) {
   dlwhi::size_t count = std::distance(start, end);
   if (count > max_size() || count < 0) {
     throw std::length_error("Distance between start and end iterators is negative or too big");
@@ -332,15 +343,17 @@ constexpr void vector<T, Allocator>::assign(InputIterator start, InputIterator e
   }
   construct_multiple(mem, start, end);
   size_ = count;
+  return *this;
 }
 
 template <typename T, class Allocator>
-constexpr void vector<T, Allocator>::resize(dlwhi::size_t count, const_reference value) {
+constexpr vector<T, Allocator>&
+vector<T, Allocator>::resize(dlwhi::size_t count, const_reference value) {
   if (count > max_size() || count < 0) {
     throw std::length_error("Invalid resize space");
   }
   if (size_ == count)
-    return;
+    return *this;
   else if (size_ > count) {
     destroy_multiple(ptr_ + count, size_ - count);
   } else {
@@ -353,6 +366,7 @@ constexpr void vector<T, Allocator>::resize(dlwhi::size_t count, const_reference
     construct_multiple(ptr_ + size_, count - size_, value);
   }
   size_ = count;
+  return *this;
 }
 
 template <typename T, class Allocator>

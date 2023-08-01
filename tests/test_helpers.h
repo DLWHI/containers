@@ -51,7 +51,7 @@ class dummyMv : public dummyCpy
       other.leak_ = nullptr;
     }
     virtual ~dummyMv() { }
-    
+
     const Constructed birth;
 };
 

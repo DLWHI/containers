@@ -29,8 +29,9 @@ constexpr int constexpr_check() {
   vec.push_back(6);
   vec.erase(--vec.end());
   vec.insert(vec.begin(), 0); // does not satify constexpr?
-  vec.insert(vec.begin() + 3, -1); // satify constexpr kekwait
-  vec.insert(--vec.end(), -1); // satify constexpr too kekwait
+  vec.insert(vec.begin() + 1, 0); // satifies constexpr kekwait
+  vec.insert(vec.begin() + 3, -1); // satifies constexpr kekwait
+  vec.insert(--vec.end(), -1); // satifies constexpr too kekwait
   vec.shrink_to_fit();
   vec.assign({6, 6, 6, 7, 7, 7});
   return *(vec.end() - 1);
@@ -486,9 +487,9 @@ TEST(VectorTest, resize_expand_movable) {
 
 TEST(VectorTest, resize_shrink_movable) {
   for (int i = 0; i < loop; i++) {
-    dlwhi::size_t size = uid(gen), old_size;
+    dlwhi::size_t size = uid(gen);
     dlwhi::vector<dummyMv> vec(size);
-    old_size = vec.size();
+
     size = 1 + size / (1 + uid(gen));
     vec.resize(size, dummyMv("trick"));
     EXPECT_LE(size, vec.capacity());
