@@ -18,8 +18,9 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+if ((CMAKE_CXX_COMPILER_ID STREQUAL GNU) OR (CMAKE_CXX_COMPILER_ID STREQUAL AppleClang))
   add_compile_options(-Wall -Werror -Wextra -g -fdiagnostics-color=always -fsanitize=address)
+  add_link_options(-fsanitize=address)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
   add_compile_options(/fsanitize=address)
 endif()

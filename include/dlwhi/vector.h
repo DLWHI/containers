@@ -63,13 +63,13 @@ class vector {
 
   constexpr vector(const vector& other) : vector(other.begin(), other.end(), other.al_){};
 
-  constexpr vector(vector&& other) noexcept : vector() { *this = std::move(other); };
+  constexpr vector(vector&& other) noexcept : vector() { *this = std::move(other);}
 
   constexpr vector(const vector& other, const Allocator& alloc) 
       : vector(other.begin(), other.end(), alloc){};
 
   constexpr vector(vector&& other, const Allocator& alloc) noexcept
-    : size_(0), capacity_(0), ptr_(nullptr), al_(alloc) { 
+    : size_(0), capacity_(0), ptr_(nullptr), al_(alloc) {
     std::swap(capacity_, other.capacity_);
     std::swap(size_, other.size_);
     std::swap(ptr_, other.ptr_);
@@ -81,8 +81,11 @@ class vector {
     return *this;
   }
 
-  constexpr vector& operator=(vector&& other) noexcept(noexcept(swap(other))) {
-    swap(other);
+  constexpr vector& operator=(vector&& other) noexcept {
+    std::swap(capacity_, other.capacity_);
+    std::swap(size_, other.size_);
+    std::swap(ptr_, other.ptr_);
+    al_ = std::move(other.al_);
     return *this;
   }
 
@@ -96,11 +99,11 @@ class vector {
   }
 
   constexpr reference at(dlwhi::size_t pos) {
-    return (0 < pos && pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
+    return (0 <= pos && pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   constexpr const_reference at(dlwhi::size_t pos) const {
-    return (0 < pos && pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
+    return (0 <= pos && pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   constexpr reference front() noexcept { return ptr_[0]; }
@@ -220,7 +223,7 @@ class vector {
   constexpr reference operator[](dlwhi::size_t i) { return ptr_[i]; }
   constexpr value_type operator[](dlwhi::size_t i) const { return ptr_[i]; }
 
-  constexpr void swap(vector& other) noexcept(al_traits::propagate_on_container_swap::value
+  constexpr void  swap(vector& other) noexcept(al_traits::propagate_on_container_swap::value
                                               || al_traits::is_always_equal::value) {
     if constexpr (al_traits::propagate_on_container_swap::value)
       std::swap(al_, other.al_);

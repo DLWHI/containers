@@ -2,11 +2,6 @@
 #define DLWHI_TESTS_TEST_HELPERS_H_
 #include <string>
 #include <memory>
-// This is testing subject class with restrictions
-// Several implementations satisfy different named requirements
-// Vector requires object to be at least
-// CopyAssignable, CopyConstructible and Erasable
-// Some methods could alse require MoveAssignable and MoveConstructible
 
 // CopyConstructible and Erasable dummy
 class dummyCpy
@@ -30,26 +25,38 @@ class dummyCpy
     int* leak_;
 };
 
-// + MoveAssignable and MoveConstructible dummy
+// + MoveConstructible dummy
 class dummyMv : public dummyCpy
 {
   public:
-    dummyMv() : dummyCpy() { };
-    explicit dummyMv(const std::string& name) : dummyCpy(name) { };
-    dummyMv(const dummyMv& other) : dummyCpy(other.id_) { };
+    enum class Constructed {
+      kDef,
+      kParam,
+      kCopy,
+      kMove
+    };
+
+    dummyMv() : dummyCpy(), birth(Constructed::kDef) { };
+    explicit dummyMv(const std::string& name) : dummyCpy(name), birth(Constructed::kParam) { };
+    dummyMv(const dummyMv& other) : dummyCpy(other.id_), birth(Constructed::kCopy) { };
     // speed dies as this is test class
-    dummyMv(dummyMv&& other) { 
+    dummyMv(dummyMv&& other): birth(Constructed::kMove) { 
       id_ = std::move(other.id_);
       delete leak_;
       leak_ = other.leak_;
       other.leak_ = nullptr;
     }
     virtual ~dummyMv() { }
+    
+    const Constructed birth;
 };
 
+// state allocator
 template <typename T>
 class state_allocator : public std::allocator<T> {
   public:
+    typedef std::false_type is_always_equal;
+
     state_allocator(const std::string& state) : std::allocator<T>(), state_(state) {};
 
     bool operator==(const state_allocator& other) {
