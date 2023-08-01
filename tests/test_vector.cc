@@ -22,6 +22,19 @@ constexpr int loop = LOOP_COUNT;
 constexpr int loop = 50;
 #endif
 
+constexpr int constexpr_check() {
+  dlwhi::vector<int> vec = {1, 2, 3, 4, 5};
+  vec.emplace(vec.end(), 7);
+  vec.reserve(100);
+  vec.push_back(6);
+  vec.erase(--vec.end());
+  vec.insert(vec.begin(), 0); // does not satify constexpr?
+  vec.insert(vec.begin() + 3, -1); // satify constexpr kekwait
+  vec.insert(--vec.end(), -1); // satify constexpr too kekwait
+  vec.shrink_to_fit();
+  vec.assign({6, 6, 6, 7, 7, 7});
+  return *(vec.end() - 1);
+}
 
 TEST(VectorTest, ctor_default) {
   dlwhi::vector<dummyCpy> vec;
@@ -526,6 +539,15 @@ TEST(VectorTest, insert_empty_not_movable) {
   EXPECT_EQ(insert_pos, vec.begin());
 }
 
+TEST(VectorTest, insert_begin_not_movable) {
+  dummyCpy target("inserted");
+  dlwhi::vector<dummyCpy> vec(uid(gen), dummyCpy("default"));
+  auto insert_pos = vec.insert(vec.begin(), target);
+  EXPECT_EQ(*insert_pos, target);
+  EXPECT_EQ(*vec.begin(), target);
+  EXPECT_EQ(vec.begin(), insert_pos);
+}
+
 TEST(VectorTest, insert_movable_1) {
   int insert_count = std::min(static_cast<int>(uid(gen)), loop);
   dlwhi::vector<dummyMv> vec(uid(gen), dummyMv("default"));
@@ -551,6 +573,15 @@ TEST(VectorTest, insert_empty_movable) {
   dlwhi::vector<dummyMv> vec;
   auto insert_pos = vec.insert(vec.begin(), dummyMv("inserted"));
   EXPECT_EQ(insert_pos, vec.begin());
+}
+
+TEST(VectorTest, insert_begin_movable) {
+  dlwhi::vector<dummyMv> vec(uid(gen), dummyMv("default"));
+  auto insert_pos = vec.insert(vec.begin(), dummyMv("inserted"));
+  EXPECT_EQ(*insert_pos, dummyMv("inserted"));
+  EXPECT_EQ(*vec.begin(), dummyMv("inserted"));
+  EXPECT_EQ(vec.begin(), insert_pos);
+  EXPECT_EQ(vec.back().birth, dummyMv::Constructed::kMove);
 }
 
 TEST(VectorTest, push_back_not_movable_1) {
@@ -741,6 +772,11 @@ TEST(VectorTest, stream) {
   std::string expected("Aileen Anna Louie Noel Grace");
   stream << vec;
   EXPECT_EQ(expected, stream.str());
+}
+
+TEST(VectorTest, valid_constexpr) {
+  constexpr int cexper = constexpr_check();
+  EXPECT_EQ(cexper, 7);
 }
 
 int main(int argc, char** argv) {

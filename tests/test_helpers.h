@@ -3,6 +3,10 @@
 #include <string>
 #include <memory>
 
+struct IntWrapper {
+  int data;
+};
+
 // CopyConstructible and Erasable dummy
 class dummyCpy
 {

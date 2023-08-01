@@ -23,20 +23,18 @@ struct array {
   typedef const T* const_pointer;
   typedef T& reference;
   typedef const T& const_reference;
-  typedef size_t size_type;
+  
   typedef dlwhi::iterator<T, array> iterator;
   typedef dlwhi::iterator<const T, array> const_iterator;
   typedef dlwhi::reverse_iterator<T, array> reverse_iterator;
   typedef dlwhi::reverse_iterator<const T, array> const_reverse_iterator;
 
   constexpr reference at(size_t pos) {
-    if (pos >= N) throw std::out_of_range("Accessing element out of bounds");
-    return arr[pos];
+    return (pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   constexpr const_reference at(size_t pos) const {
-    if (pos >= N) throw std::out_of_range("Accessing element out of bounds");
-    return arr[pos];
+    return (pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   constexpr reference front() { return arr[0]; }
@@ -95,6 +93,9 @@ struct array {
       if (arr[i] != other.arr[i]) return false;
     return true;
   }
+
+    return (pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
+
 
   friend std::ostream& operator<<(std::ostream& os, const array& array) {
     for (size_t i = 0; i < N - 1; i++) os << array.arr[i] << ' ';

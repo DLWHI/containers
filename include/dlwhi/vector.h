@@ -89,7 +89,7 @@ class vector {
     return *this;
   }
 
-  virtual ~vector() {
+  constexpr virtual ~vector() {
     destroy_multiple(ptr_, size_);
     al_.deallocate(ptr_, capacity_);
   }
@@ -258,16 +258,16 @@ class vector {
 
   template <typename... Args>
   constexpr void construct_multiple(pointer where, dlwhi::size_t count, Args&&... args) {
-    for (dlwhi::size_t i = 0; i < count; i++, where++) 
+    for (dlwhi::size_t i = 0; i < count; ++i, ++where) 
       al_traits::construct(al_, where, std::forward<Args>(args)...);
   }
 
   constexpr void destroy_multiple(pointer start, dlwhi::size_t count) {
-    for (dlwhi::size_t i = 0; i < count; i++, start++) std::destroy_at(start);
+    for (dlwhi::size_t i = 0; i < count; ++i, ++start) std::destroy_at(start);
   }
 
   constexpr void move_chunk_left(pointer left, pointer right, pointer where) {
-    for (; left != right; left++, where++) {
+    for (; left != right; ++left, ++where) {
       if constexpr (std::is_move_constructible<T>::value)
         al_traits::construct(al_, where, std::move(*left));
       else
@@ -277,7 +277,7 @@ class vector {
   }
 
   constexpr void move_chunk_right(pointer left, pointer right, pointer where) {
-    for (right--, where += right - left; right >= left; right--, where--) {
+    for (--right, where += right - left; right >= left; --right, --where) {
       if constexpr (std::is_move_constructible<T>::value)
         al_traits::construct(al_, where, std::move(*right));
       else
@@ -369,7 +369,7 @@ vector<T, Allocator>::place_at(const_iterator pos,
     swap_buffers(mem);
     capacity_ = std::max(capacity_ * kCapMul, size_ + 1);
   } else {
-    move_chunk_right(ptr_ + delta, end().base(), ptr_ + delta + 1);
+    move_chunk_right(ptr_ + delta, ptr_ + size_, ptr_ + delta + 1);
     al_traits::construct(al_, ptr_ + delta, std::forward<Args>(value)...);
   }
   size_++;

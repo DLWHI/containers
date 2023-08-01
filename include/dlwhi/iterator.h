@@ -13,7 +13,7 @@ class iterator {
  public:
   typedef std::random_access_iterator_tag iterator_category;
   typedef T value_type;
-  typedef int64_t difference_type;
+  typedef int32_t difference_type;
   typedef T* pointer;
   typedef T& reference;
 
@@ -60,6 +60,16 @@ class iterator {
 
   constexpr difference_type operator-(const iterator& other) const noexcept {
     return ptr_ - other.ptr_;
+  }
+
+  constexpr iterator& operator+=(difference_type delta) noexcept {
+    ptr_ += delta;
+    return *this;
+  }
+
+  constexpr iterator& operator-=(difference_type delta) noexcept {
+    ptr_ -= delta;
+    return *this;
   }
 
   constexpr iterator operator++(int) noexcept { return iterator(ptr_++); }
@@ -135,6 +145,16 @@ class reverse_iterator {
 
   constexpr difference_type operator-(const reverse_iterator& other) const noexcept {
     return other.ptr_ - ptr_;
+  }
+
+  constexpr reverse_iterator& operator+=(difference_type delta) noexcept {
+    ptr_ += delta;
+    return *this;
+  }
+
+  constexpr reverse_iterator& operator-=(difference_type delta) noexcept {
+    ptr_ -= delta;
+    return *this;
   }
 
   constexpr reverse_iterator operator++(int) noexcept { return reverse_iterator(ptr_--); }
