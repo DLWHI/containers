@@ -22,7 +22,7 @@ constexpr int loop = LOOP_COUNT;
 constexpr int loop = 50;
 #endif
 
-constexpr int constexpr_check() {
+constexpr int constexpr_check(int val) {
   dlwhi::vector<int> vec = {1, 2, 3, 4, 5};
   vec.emplace(vec.end(), 7);
   vec.reserve(100);
@@ -34,6 +34,7 @@ constexpr int constexpr_check() {
   vec.insert(--vec.end(), -1); // satifies constexpr too kekwait
   vec.shrink_to_fit();
   vec.assign({6, 6, 6, 7, 7, 7});
+  vec.push_back(val);
   return *(vec.end() - 1);
 }
 
@@ -776,8 +777,8 @@ TEST(VectorTest, stream) {
 }
 
 TEST(VectorTest, valid_constexpr) {
-  constexpr int cexper = constexpr_check();
-  EXPECT_EQ(cexper, 7);
+  constexpr int cexper = constexpr_check(0);
+  EXPECT_EQ(cexper, 0);
 }
 
 int main(int argc, char** argv) {

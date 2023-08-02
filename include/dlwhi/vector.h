@@ -275,21 +275,22 @@ class vector {
   }
 
   constexpr void move_chunk_left(pointer left, pointer right, pointer where) {
-    for (; left != right; ++left, ++where) {
+    while (left != right) {
       if constexpr (std::is_move_constructible<T>::value)
-        al_traits::construct(al_, where, std::move(*left));
+        al_traits::construct(al_, where++, std::move(*left));
       else
-        al_traits::construct(al_, where, *left);
-      al_traits::destroy(al_, left);
+        al_traits::construct(al_, where++, *left);
+      al_traits::destroy(al_, left++);
     }
   }
 
   constexpr void move_chunk_right(pointer left, pointer right, pointer where) {
-    for (--right, where += right - left; right >= left; --right, --where) {
+    where += right - left;
+    while (left != right) {
       if constexpr (std::is_move_constructible<T>::value)
-        al_traits::construct(al_, where, std::move(*right));
+        al_traits::construct(al_, --where, std::move(*--right));
       else
-        al_traits::construct(al_, where, *right);
+        al_traits::construct(al_, --where, *--right);
       al_traits::destroy(al_, right);
     }
   }
