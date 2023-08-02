@@ -10,9 +10,6 @@
 namespace dlwhi {
 typedef int64_t size_t;
 
-// TODO:
-//  - Why make_array requires std::decay?
-
 // Requires T to be Swappable, CopyAssignable
 template <typename T, size_t N>
 struct array {
