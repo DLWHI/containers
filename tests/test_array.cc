@@ -163,28 +163,28 @@ TEST(ArrayTest, make_array) {
   for (int i = 0; i < arr.size(); i++)
     EXPECT_EQ(arr[i], i + 1);
 }
-
+#ifndef _MSC_VER
 TEST(ArrayTest, make_array_different_convertible) {
   auto arr = dlwhi::make_array(1u, 2u, 3u, 4, 5, 6l, 7l);
 
   for (int i = 0; i < arr.size(); i++)
     EXPECT_EQ(arr[i], i + 1);
 }
-
+#endif
 TEST(ArrayTest, make_array_constexpr_1) {
   constexpr auto arr = dlwhi::make_array(1, 2, 3, 4, 5, 6, 7);
 
   for (int i = 0; i < arr.size(); i++)
     EXPECT_EQ(arr[i], i + 1);
 }
-
+#ifndef _MSC_VER
 TEST(ArrayTest, make_array_constexpr_2) {
   constexpr auto arr = dlwhi::make_array(1u, 2u, 3u, 4, 5, 6l, 7l);
 
   for (int i = 0; i < arr.size(); i++)
     EXPECT_EQ(arr[i], i + 1);
 }
-
+#endif
 TEST(ArrayTest, valid_constexpr_1) {
   constexpr dlwhi::array<int, 7> arr{7, 7, 7, 7, 7, 7, 7};
 

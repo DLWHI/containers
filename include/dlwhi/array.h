@@ -1,11 +1,12 @@
-#ifndef SRC_CONTAINERS_S21_ARRAY_H_
-#define SRC_CONTAINERS_S21_ARRAY_H_
+#ifndef DLWHI_CONTAINERS_ARRAY_H_
+#define DLWHI_CONTAINERS_ARRAY_H_
 #include <cstdint>
 #include <ostream>
 #include <stdexcept>
 #include <type_traits>
 
 #include "iterator.h"
+#include "reverse_iterator.h"
 
 namespace dlwhi {
 typedef int64_t size_t;
@@ -13,16 +14,16 @@ typedef int64_t size_t;
 // Requires T to be Swappable, CopyAssignable
 template <typename T, size_t N>
 struct array {
-  typedef T value_type;
-  typedef T* pointer;
-  typedef const T* const_pointer;
-  typedef T& reference;
-  typedef const T& const_reference;
-  
-  typedef dlwhi::iterator<T, array> iterator;
-  typedef dlwhi::iterator<const T, array> const_iterator;
-  typedef dlwhi::reverse_iterator<T, array> reverse_iterator;
-  typedef dlwhi::reverse_iterator<const T, array> const_reverse_iterator;
+  using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T*;
+  using const_reference = const T&;
+
+  using iterator = dlwhi::iterator<T, vector>;
+  using const_iterator = dlwhi::iterator<const T, vector>;
+  using reverse_iterator = dlwhi::reverse_iterator<iterator>;
+  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>
 
   constexpr reference at(size_t pos) {
     return (0 <= pos && pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
@@ -109,4 +110,4 @@ make_array(Vals&&... values) {
                  {std::forward<Vals>(values)...};
 }
 }  // namespace s21
-#endif  // SRC_CONTAINERS_S21_ARRAY_H_
+#endif  // DLWHI_CONTAINERS_ARRAY_H_

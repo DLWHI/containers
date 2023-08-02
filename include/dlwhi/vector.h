@@ -1,5 +1,5 @@
-#ifndef DLWHI_INCLUDE_VECTOR_H_
-#define DLWHI_INCLUDE_VECTOR_H_
+#ifndef DLWHI_CONTAINERS_VECTOR_H_
+#define DLWHI_CONTAINERS_VECTOR_H_
 #include <cstdint>
 #include <initializer_list>
 #include <memory>
@@ -9,28 +9,30 @@
 #include <utility>
 
 #include "iterator.h"
+#include "reverse_iterator.h"
 
 namespace dlwhi {
-typedef int64_t size_t;
+
+using size_t = int64_t;
 
 // Requires T to be at least CopyConstructible
 template <typename T, class Allocator = std::allocator<T>>
 class vector {
  public:
-  typedef T value_type;
-  typedef T* pointer;
-  typedef const T* const_pointer;
-  typedef T& reference;
-  typedef const T& const_reference;
-  typedef T&& move_reference;
+  using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using move_reference = T&&;
 
-  typedef Allocator allocator_type;
-  typedef std::allocator_traits<allocator_type> al_traits;
+  using allocator_type = Allocator;
+  using al_traits = std::allocator_traits<allocator_type>;
 
-  typedef dlwhi::iterator<T, vector> iterator;
-  typedef dlwhi::iterator<const T, vector> const_iterator;
-  typedef dlwhi::reverse_iterator<T, vector> reverse_iterator;
-  typedef dlwhi::reverse_iterator<const T, vector> const_reverse_iterator;
+  using iterator = dlwhi::iterator<T, vector>;
+  using const_iterator = dlwhi::iterator<const T, vector>;
+  using reverse_iterator = dlwhi::reverse_iterator<iterator>;
+  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
   static constexpr dlwhi::size_t kCapMul = 2;
 
@@ -391,4 +393,4 @@ vector<T, Allocator>::place_at(const_iterator pos,
   return iterator(ptr_ + delta);
 }
 }  // namespace dlwhi
-#endif  // DLWHI_INCLUDE_VECTOR_H_
+#endif  // DLWHI_CONTAINERS_VECTOR_H_

@@ -13,36 +13,25 @@
 namespace dlwhi {
 template <typename T, typename Allocator = std::allocator<T>>
 class list {
-  // Forward declaration:
   struct Node;
-
  public:
-  // Forward declaration:
   template <typename U>
   class ListIterator;
 
-  typedef T value_type;
-  // typedef T* pointer;
-  typedef T& reference;
-  typedef const T& const_reference;
-  typedef ListIterator<Node> iterator;
-  typedef ListIterator<const Node> const_iterator;
-  typedef size_t size_type;
+  using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using move_reference = T&&;
 
-  // typedef T value_type;
-  // typedef T* pointer;
-  // typedef const T* const_pointer;
-  // typedef T& reference;
-  // typedef const T& const_reference;
-  // typedef T&& move_reference;
+  using allocator_type = Allocator;
+  using al_traits = std::allocator_traits<allocator_type>;
 
-  // typedef Allocator allocator_type;
-  // typedef std::allocator_traits<allocator_type> al_traits;
-
-  // typedef dlwhi::iterator<T, vector> iterator;
-  // typedef dlwhi::iterator<const T, vector> const_iterator;
-  // typedef dlwhi::reverse_iterator<T, vector> reverse_iterator;
-  // typedef dlwhi::reverse_iterator<const T, vector> const_reverse_iterator;
+  using iterator = dlwhi::iterator<T, vector>;
+  using const_iterator = dlwhi::iterator<const T, vector>;
+  using reverse_iterator = dlwhi::reverse_iterator<iterator>;
+  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
   // Default constructor
   list() : head_{0, &head_, &head_}, counter_(0){};
