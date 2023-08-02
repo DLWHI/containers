@@ -36,14 +36,14 @@ target_link_libraries(
 )
 
 add_executable(
-  test_iterator
-  tests/test_iterator.cc
+  test_array
+  tests/test_array.cc
 )
 target_link_libraries(
-  test_iterator
+  test_array
   GTest::gtest_main
 )
 
 include(GoogleTest)
 gtest_discover_tests(test_vector)
-gtest_discover_tests(test_iterator)
+gtest_discover_tests(test_array)
