@@ -34,8 +34,8 @@ constexpr int constexpr_check(int val) {
   vec.insert(--vec.end(), -1); // satifies constexpr too kekwait
   vec.shrink_to_fit();
   vec.assign({6, 6, 6, 7, 7, 7});
-  vec.push_back(val);
-  return *(vec.end() - 1);
+  dlwhi::vector<int>& this_one = vec.push_back(val);
+  return *(this_one.end() - 1);
 }
 
 TEST(VectorTest, ctor_default) {
@@ -214,6 +214,8 @@ TEST(VectorTest, comparison_1) {
 
   EXPECT_TRUE(vec1 == vec2);
   EXPECT_FALSE(vec1 != vec2);
+  EXPECT_TRUE(vec2 == vec1);
+  EXPECT_FALSE(vec2 != vec1);
 }
 
 TEST(VectorTest, comparison_2) {
@@ -222,9 +224,11 @@ TEST(VectorTest, comparison_2) {
 
   EXPECT_FALSE(vec1 == vec2);
   EXPECT_TRUE(vec1 != vec2);
+  EXPECT_FALSE(vec2 == vec1);
+  EXPECT_TRUE(vec2 != vec1);
 }
 
-TEST(VectorTest, comparison_empty) {
+TEST(VectorTest, comparison_3) {
   dlwhi::vector<dummyCpy> vec1(uid(gen), dummyCpy("not equal"));
   dlwhi::vector<dummyCpy> vec2;
 
@@ -232,12 +236,21 @@ TEST(VectorTest, comparison_empty) {
   EXPECT_TRUE(vec1 != vec2);
   EXPECT_FALSE(vec2 == vec1);
   EXPECT_TRUE(vec2 != vec1);
+}
 
-  dlwhi::vector<dummyCpy> vec3;
-  dlwhi::vector<dummyCpy> vec4;
+TEST(VectorTest, comparison_self) {
+  dlwhi::vector<dummyCpy> vec(uid(gen), dummyCpy("not equal"));
 
-  EXPECT_TRUE(vec3 == vec4);
-  EXPECT_FALSE(vec3 != vec4);
+  EXPECT_TRUE(vec == vec);
+  EXPECT_FALSE(vec != vec);
+}
+
+TEST(VectorTest, comparison_empty) {
+  dlwhi::vector<dummyCpy> vec1;
+  dlwhi::vector<dummyCpy> vec2;
+
+  EXPECT_TRUE(vec1 == vec2);
+  EXPECT_FALSE(vec1 != vec2);
 }
 
 TEST(VectorTest, random_access) {
@@ -272,6 +285,13 @@ TEST(VectorTest, front_back_access) {
   }
   EXPECT_EQ(vec.front(), 1);
   EXPECT_EQ(vec.back(), vec.size());
+}
+
+TEST(VectorTest, data_access) {
+  dlwhi::vector<int> vec(uid(gen), 666);
+  int* ptr = vec.data();
+  for (int i = 0; i < vec.size(); i++)
+    EXPECT_EQ(ptr[i], 666);
 }
 
 TEST(VectorTest, assign_1) {

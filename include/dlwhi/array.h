@@ -10,12 +10,10 @@
 namespace dlwhi {
 typedef int64_t size_t;
 
-// I question this variant of array implementation, but this implementation
-// is almost same as std::array.
-// For those who question constructor absence:
-//   As we do not declare any of the constructors/destructors, they are being
-//   implicitly defined by compiler, thus there is no violation of rule of 5
-// T is reuired to be Swappable, CopyAssignable
+// TODO:
+//  - Why make_array requires std::decay?
+
+// Requires T to be Swappable, CopyAssignable
 template <typename T, size_t N>
 struct array {
   typedef T value_type;
@@ -30,11 +28,11 @@ struct array {
   typedef dlwhi::reverse_iterator<const T, array> const_reverse_iterator;
 
   constexpr reference at(size_t pos) {
-    return (pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
+    return (0 <= pos && pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   constexpr const_reference at(size_t pos) const {
-    return (pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
+    return (0 <= pos && pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
   constexpr reference front() { return arr[0]; }
@@ -45,7 +43,7 @@ struct array {
   constexpr const_reference back() const { return arr[N - 1]; }
   constexpr const_pointer data() const noexcept { return arr; }
 
-  constexpr bool empty() const noexcept { return false; }
+  constexpr bool empty() const noexcept { return !N; }
   constexpr size_t size() const noexcept { return N; }
   constexpr size_t max_size() const noexcept { return N; }
 
@@ -75,14 +73,16 @@ struct array {
     return const_reverse_iterator(arr - 1);
   }
 
-  constexpr void fill(const_reference value) {
+  constexpr array& fill(const_reference value) {
     for (size_t i = 0; i < N; i++) {
       arr[i] = value;
     }
+    return *this;
   }
 
-  constexpr void swap(array& other) noexcept(std::is_nothrow_swappable_v<T>) {
+  constexpr array& swap(array& other) noexcept(std::is_nothrow_swappable_v<T>) {
     std::swap_ranges(arr, arr + size(), other.arr);
+    return *this;
   }
 
   constexpr reference operator[](size_t i) { return arr[i]; }
@@ -94,9 +94,6 @@ struct array {
     return true;
   }
 
-    return (pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
-
-
   friend std::ostream& operator<<(std::ostream& os, const array& array) {
     for (size_t i = 0; i < N - 1; i++) os << array.arr[i] << ' ';
     os << array.arr[N - 1];
@@ -107,21 +104,12 @@ struct array {
 };
 
 template <typename... Vals>
-constexpr array<typename std::common_type<Vals...>::type, sizeof...(Vals)>
+constexpr array<typename std::decay<typename std::common_type<Vals...>::type>::type, 
+                sizeof...(Vals)> 
 make_array(Vals&&... values) {
-  return array<typename std::common_type<Vals...>::type, sizeof...(Vals)>({std::forward<T>(values)...})
+    return array<typename std::decay<typename std::common_type<Vals...>::type>::type,
+                 sizeof...(Vals)>
+                 {std::forward<Vals>(values)...};
 }
-
-// template <typename... T>
-// constexpr auto make_array(T&&... values) ->
-//     std::array<
-//        typename std::decay<
-//            typename std::common_type<T...>::type>::type,
-//        sizeof...(T)> {
-//     return std::array<
-//         typename std::decay<
-//             typename std::common_type<T...>::type>::type,
-//         sizeof...(T)>{std::forward<T>(values)...};
-// }
 }  // namespace s21
 #endif  // SRC_CONTAINERS_S21_ARRAY_H_

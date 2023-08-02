@@ -1,64 +1,200 @@
 #include <gtest/gtest.h>
 
-#include <array>
+#include <sstream>
+#include <random>
 
 #include <dlwhi/array.h>
 
-TEST(ArrayTest, test0) {
-  dlwhi::array<int, 7> s21arr{1, 2, 3, 4, 5, 6, 7};
-  std::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+constexpr int constexpr_check(int val) {
+  dlwhi::array<int, 7> arr1 = {1, 2, 3, 4, 5, 0, 0};
+  dlwhi::array<int, 7> arr2 = {1, 2, 3, 4, 5, 6, 7};
 
-  EXPECT_EQ(s21arr.at(1), arr.at(1));
-  EXPECT_EQ(s21arr.at(4), arr.at(4));
-  EXPECT_EQ(s21arr.front(), arr.front());
-  EXPECT_EQ(s21arr.back(), arr.back());
+  dlwhi::array<int, 7>& this_one = arr1.swap(arr2);
+   arr2.fill(0);
 
-  EXPECT_EQ(*s21arr.begin(), *arr.begin());
-  EXPECT_EQ(*(s21arr.end() - 1), *(arr.end() - 1));
-  EXPECT_EQ(*s21arr.rbegin(), *arr.rbegin());
-  EXPECT_EQ(*(s21arr.rend() - 1), *(arr.rend() - 1));
+  this_one[3] = val;
 
-  s21arr.fill(4);
-  arr.fill(4);
-  auto s21it = s21arr.begin();
-  auto it = arr.begin();
-  for (; s21it != s21arr.end(); it++, s21it++) EXPECT_EQ(*s21it, *it);
-
-  dlwhi::array<int, 7> other{1, 2, 3, 4, 5, 6, 7};
-  other.swap(s21arr);
-  s21it = other.begin();
-  for (it = arr.begin(); s21it != other.end(); it++, s21it++)
-    EXPECT_EQ(*s21it, *it);
-
-  for (size_t i = 0; i < other.size(); i++) other[i] = i + 1;
-
-  EXPECT_EQ(other, s21arr);
+  return *(arr1.begin() + 3);
 }
 
-TEST(ArrayTest, test1) {
-  const dlwhi::array<int, 2> s21arr_const{1, 2};
-  std::array<int, 2> arr{1, 2};
+TEST(ArrayTest, init) {
+  dlwhi::array<int, 7> arr;
 
-  EXPECT_EQ(s21arr_const.at(1), arr.at(1));
-  EXPECT_EQ(s21arr_const.at(0), arr.at(0));
-  EXPECT_EQ(s21arr_const.front(), arr.front());
-  EXPECT_EQ(s21arr_const.back(), arr.back());
+  EXPECT_EQ(arr.size(), 7);
+  EXPECT_EQ(arr.max_size(), 7);
+  EXPECT_FALSE(arr.empty());
+}
 
-  EXPECT_EQ(*s21arr_const.begin(), *arr.begin());
-  EXPECT_EQ(*(s21arr_const.end() - 1), *(arr.end() - 1));
-  EXPECT_EQ(*s21arr_const.rbegin(), *arr.rbegin());
-  EXPECT_EQ(*(s21arr_const.rend() - 1), *(arr.rend() - 1));
+TEST(ArrayTest, no_element_init) {
+  dlwhi::array<int, 0> arr;
 
-  constexpr size_t size_arr = arr.size();
-  constexpr size_t size_s21arr = s21arr_const.size();
-  EXPECT_EQ(size_arr, size_s21arr);
+  EXPECT_EQ(arr.size(), 0);
+  EXPECT_EQ(arr.max_size(), 0);
+  EXPECT_TRUE(arr.empty());
+}
 
-  constexpr bool empty = s21arr_const.empty();
-  EXPECT_FALSE(empty);
+TEST(ArrayTest, zero_init) {
+  dlwhi::array<int, 1000> arr{0};
 
-  constexpr size_t max_size_s21arr = s21arr_const.max_size();
-  constexpr size_t max_size_arr = arr.max_size();
-  EXPECT_EQ(max_size_s21arr, max_size_arr);
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(arr[i], 0);
+}
+
+TEST(ArrayTest, braced_list_init) {
+  dlwhi::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(arr[i], i + 1);
+}
+
+TEST(ArrayTest, random_access) {
+  dlwhi::array<int, 15> arr{0};
+  for (int i = 0; i < arr.size(); i++) {
+    EXPECT_EQ(arr[i], 0);
+    arr[i] = i + 1;
+  }
+  for (int i = 0; i < arr.size(); i++) {
+    EXPECT_EQ(arr[i], i + 1);
+  }
+}
+
+TEST(ArrayTest, random_access_bounds) {
+  dlwhi::array<int, 7> arr{0};
+  for (int i = 0; i < arr.size(); i++) {
+    EXPECT_EQ(arr.at(i), 0);
+    arr.at(i) = i + 1;
+  }
+  for (int i = 0; i < arr.size(); i++) {
+    EXPECT_EQ(arr.at(i), i + 1);
+  }
+  EXPECT_THROW(arr.at(-1), std::out_of_range);
+  EXPECT_THROW(arr.at(arr.size()), std::out_of_range);
+}
+
+TEST(ArrayTest, front_back_access) {
+  dlwhi::array<int, 7> arr{0};
+  for (int i = 0; i < arr.size(); i++) {
+    EXPECT_EQ(arr[i], 0);
+    arr[i] = i + 1;
+  }
+  EXPECT_EQ(arr.front(), 1);
+  EXPECT_EQ(arr.back(), arr.size());
+}
+
+TEST(ArrayTest, zero_element_access) {
+  dlwhi::array<int, 0> arr;
+  EXPECT_THROW(arr.at(4), std::out_of_range);
+  EXPECT_THROW(arr.at(0), std::out_of_range);
+}
+
+TEST(ArrayTest, data_access) {
+  dlwhi::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  int* ptr = arr.data();
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(ptr[i], i + 1);
+}
+
+TEST(ArrayTest, comparison_1) {
+  dlwhi::array<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
+  dlwhi::array<int, 7> arr2{1, 2, 3, 4, 5, 6, 7};
+
+  EXPECT_TRUE(arr1 == arr1);
+  EXPECT_FALSE(arr1 != arr1);
+  EXPECT_TRUE(arr1 == arr2);
+  EXPECT_FALSE(arr1 != arr2);
+}
+
+TEST(ArrayTest, comparison_2) {
+  dlwhi::array<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
+  dlwhi::array<int, 7> arr2{7, 6, 5, 4, 3, 2, 1};
+
+  EXPECT_FALSE(arr1 == arr2);
+  EXPECT_TRUE(arr1 != arr2);
+  EXPECT_FALSE(arr2 == arr1);
+  EXPECT_TRUE(arr2 != arr1);
+}
+
+TEST(ArrayTest, comparison_self) {
+  dlwhi::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+
+  EXPECT_TRUE(arr == arr);
+  EXPECT_FALSE(arr != arr);
+}
+
+TEST(ArrayTest, comparison_empty) {
+  dlwhi::array<int, 0> arr1;
+  dlwhi::array<int, 0> arr2;
+
+
+  EXPECT_TRUE(arr1 == arr2);
+  EXPECT_FALSE(arr1 != arr2);
+}
+
+TEST(ArrayTest, fill_1) {
+  dlwhi::array<int, 7> arr;
+
+  arr.fill(7);
+
+  for (int n: arr)
+    EXPECT_EQ(n, 7);
+}
+
+TEST(ArrayTest, fill_2) {
+  dlwhi::array<int, 7> arr;
+
+  arr.fill(0);
+
+  for (auto it = arr.begin(); it != arr.end(); it++)
+    EXPECT_EQ(*it, 0);
+}
+
+TEST(ArrayTest, fill_empty) {
+  dlwhi::array<int, 0> arr;
+
+  arr.fill(7);
+
+  EXPECT_TRUE(arr.empty());
+  EXPECT_EQ(arr.begin(), arr.end());
+}
+
+TEST(ArrayTest, make_array) {
+  auto arr = dlwhi::make_array(1, 2, 3, 4, 5, 6, 7);
+
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(arr[i], i + 1);
+}
+
+TEST(ArrayTest, make_array_different_convertible) {
+  auto arr = dlwhi::make_array(1u, 2u, 3u, 4, 5, 6l, 7l);
+
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(arr[i], i + 1);
+}
+
+TEST(ArrayTest, make_array_constexpr_1) {
+  constexpr auto arr = dlwhi::make_array(1, 2, 3, 4, 5, 6, 7);
+
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(arr[i], i + 1);
+}
+
+TEST(ArrayTest, make_array_constexpr_2) {
+  constexpr auto arr = dlwhi::make_array(1u, 2u, 3u, 4, 5, 6l, 7l);
+
+  for (int i = 0; i < arr.size(); i++)
+    EXPECT_EQ(arr[i], i + 1);
+}
+
+TEST(ArrayTest, valid_constexpr_1) {
+  constexpr dlwhi::array<int, 7> arr{7, 7, 7, 7, 7, 7, 7};
+
+  for (auto it = arr.begin(); it != arr.end(); it++)
+    EXPECT_EQ(*it, 7);
+}
+
+TEST(ArrayTest, valid_constexpr_2) {
+  constexpr int cexper = constexpr_check(-7);
+  EXPECT_EQ(cexper, -7);
 }
 
 TEST(ArrayTest, scenartio_stream) {
