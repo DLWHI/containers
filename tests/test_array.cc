@@ -204,3 +204,9 @@ TEST(ArrayTest, scenartio_stream) {
   stream << arr;
   EXPECT_EQ(expected, stream.str());
 }
+
+int main(int argc, char** argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  return RUN_ALL_TESTS();
+}

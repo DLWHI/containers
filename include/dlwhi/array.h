@@ -17,13 +17,13 @@ struct array {
   using value_type = T;
   using pointer = T*;
   using const_pointer = const T*;
-  using reference = T*;
+  using reference = T&;
   using const_reference = const T&;
 
-  using iterator = dlwhi::iterator<T, vector>;
-  using const_iterator = dlwhi::iterator<const T, vector>;
+  using iterator = dlwhi::iterator<T, array>;
+  using const_iterator = dlwhi::iterator<const T, array>;
   using reverse_iterator = dlwhi::reverse_iterator<iterator>;
-  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>
+  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
   constexpr reference at(size_t pos) {
     return (0 <= pos && pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");

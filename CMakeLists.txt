@@ -25,6 +25,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
   add_compile_options(/fsanitize=address)
 endif()
 
+include(GoogleTest)
 
 add_executable(
   test_vector
@@ -34,6 +35,7 @@ target_link_libraries(
     test_vector
   GTest::gtest_main
 )
+gtest_discover_tests(test_vector)
 
 add_executable(
   test_array
@@ -43,7 +45,4 @@ target_link_libraries(
   test_array
   GTest::gtest_main
 )
-
-include(GoogleTest)
-gtest_discover_tests(test_vector)
 gtest_discover_tests(test_array)

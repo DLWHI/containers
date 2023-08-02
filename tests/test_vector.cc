@@ -9,7 +9,7 @@
 #include "test_helpers.h"
 
 // TODO:
-//  Add swap tests (but 69 nice)
+//  Add swap tests
 
 
 std::random_device ran_dev;
