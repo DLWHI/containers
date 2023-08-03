@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <initializer_list>
-#include <limits>
 #include <memory>
 #include <ostream>
 #include <stdexcept>
@@ -11,6 +10,9 @@
 #include <utility>
 
 namespace dlwhi {
+
+using size_t = int64_t;
+
 template <typename T, typename Allocator = std::allocator<T>>
 class list {
   struct Node;
@@ -33,7 +35,6 @@ class list {
   using reverse_iterator = dlwhi::reverse_iterator<iterator>;
   using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
-  // Default constructor
   list() : head_{0, &head_, &head_}, counter_(0){};
 
   /*  Parametarised constructor
@@ -112,28 +113,20 @@ class list {
   }
 
   //  List Element access:---------------------------------------------------
-  //  Returns a read-only reference to the data from the first node of the list
-  const_reference front() { return *begin(); }
-  //  Returns a read-only reference to the data from the last node of the list
-  const_reference back() { return *(end() - 1); }
+  reference front() { return *begin(); }
+  reference back() { return *(end() - 1); }
+  
+  const_reference front() const { return *begin(); }
+  const_reference back() const { return *(end() - 1); }
 
   //  List Iterators: --------------------------------------------------------
   iterator begin() { return iterator(&head_) + 1; }
-
   iterator end() { return iterator(&head_); }
 
-  //  List Capacity:  ---------------------------------------------------------
-  bool empty() {
-    if (this->counter_ == 0) {
-      return 1;
-    }
-    return 0;
-  }
-  //  returns max number of elements
-  size_type max_size() const { return size_type(-1); }
-  //  returns number of elements in the list
-  size_type size() { return counter_; }
-  //  List Modifiers  ---------------------------------------------------------
+  bool empty() const noexcept { return !node_c_;}
+  size_type max_size() const noexcept { return al_traits::max_size(al_); }
+  size_type size() const noexcept { return node_c_; }
+
   //  void clear() {}
   iterator insert(iterator pos, const_reference value) {
     Node* some = new Node{value, pos.ptr_->prev_, pos.ptr_};
@@ -367,7 +360,7 @@ class list {
 
  private:
   Node head_;
-  size_t counter_;
+  size_t node_c_;
 
   struct Node {  //  or a structure
     T data_;
