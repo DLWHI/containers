@@ -55,6 +55,27 @@ class dummyMv : public dummyCpy
     const Constructed birth;
 };
 
+// CopyConstructible and Erasable dummy
+class dummyNoDef
+{
+  public:
+    explicit dummyNoDef(const std::string& name) : id_(name), leak_(new int()) { };
+    dummyNoDef(dummyNoDef&& other) = delete;
+    dummyNoDef(const dummyNoDef& other) : id_(other.id_), leak_(new int()) { };
+    virtual ~dummyNoDef() { delete leak_;}
+
+    bool operator==(const dummyNoDef& other) const { return other.id_ == id_;}
+    bool operator!=(const dummyNoDef& other) const { return other.id_ != id_;}
+
+    friend std::ostream& operator<<(std::ostream& os, const dummyNoDef& obj) {
+      os << obj.id_;
+      return os;
+    }
+  protected:
+    std::string id_;
+    int* leak_;
+};
+
 // state allocator
 template <typename T>
 class state_allocator : public std::allocator<T> {

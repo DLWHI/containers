@@ -46,3 +46,13 @@ target_link_libraries(
   GTest::gtest_main
 )
 gtest_discover_tests(test_array)
+
+add_executable(
+  test_list
+  tests/test_list.cc
+)
+target_link_libraries(
+  test_list
+  GTest::gtest_main
+)
+gtest_discover_tests(test_list)

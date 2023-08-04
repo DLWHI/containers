@@ -36,27 +36,24 @@ class vector {
 
   static constexpr dlwhi::size_t kCapMul = 2;
 
-  constexpr vector() noexcept(noexcept(Allocator())) : size_(0), capacity_(0), ptr_(nullptr), al_(Allocator()){};
+  constexpr vector() noexcept(noexcept(Allocator())) : al_(Allocator()), ptr_(nullptr), size_(0), capacity_(0){};
 
   constexpr explicit vector(const Allocator& alloc) noexcept 
-      : size_(0), capacity_(0), ptr_(nullptr), al_(alloc){};
+      : al_(alloc), size_(0), capacity_(0), ptr_(nullptr){};
 
   constexpr explicit vector(dlwhi::size_t size, const Allocator& alloc = Allocator()) 
-      : size_(size), capacity_(size_), al_(alloc) {
-    ptr_ = al_.allocate(capacity_);
+      : al_(alloc), size_(size), capacity_(size_), ptr_(al_.allocate(size)) {
     construct_multiple(ptr_, size_);
   };
 
   constexpr explicit vector(dlwhi::size_t size, const_reference value, const Allocator& alloc = Allocator())
-      : size_(size), capacity_(size_), al_(alloc) {
-    ptr_ = al_.allocate(capacity_);
+      : al_(alloc), size_(size), capacity_(size_), ptr_(al_.allocate(size)) {
     construct_multiple(ptr_, size_, value);
   };
 
   template <typename InputIterator>
   constexpr vector(const InputIterator& start, const InputIterator& end, const Allocator& alloc = Allocator())
-      : size_(std::distance(start, end)), capacity_(size_), al_(alloc) {
-    ptr_ = al_.allocate(capacity_);
+      : al_(alloc), size_(std::distance(start, end)), capacity_(size_), ptr_(al_.allocate(size_)) {
     construct_multiple(ptr_, start, end);
   }
 
@@ -305,10 +302,10 @@ class vector {
   template <typename... Args>
   constexpr iterator place_at(const_iterator pos, Args&&... value);
 
+  allocator_type al_;
   dlwhi::size_t size_;
   dlwhi::size_t capacity_;
   pointer ptr_;
-  allocator_type al_;
 };
 
 template <typename T, class Allocator>
