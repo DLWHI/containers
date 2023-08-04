@@ -19,7 +19,8 @@ class list {
   struct Node;
 
   using node_type = Node<T>;
-  using rebind_alloc = std::allocator_traits<Allocator>::rebind_alloc<node_type>;
+  using node_ptr = Node<T>::pointer;
+  using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_type>;
  public:
   template <typename U>
   class ListIterator;
@@ -40,7 +41,21 @@ class list {
   // using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
   list() : al_(Allocator()), head_(al_.allocate(1)), node_c_(0){
+    head_->construct_head();
+  };
 
+  explicit list(Allocator& alloc) : al_(alloc), head_(al_.allocate(1)), node_c_(0){
+    head_->construct_head();
+  };
+
+  list(size_t count, const_reference val, Allocator& alloc = Allocator()) 
+      : al_(alloc), head_(al_.allocate(1)), node_c_(count){
+    node_ptr ptr = head_->construct_head();
+    for (size_t i = 0; i < node_c_; ++i, ptr = ptr->next()) {
+      node_ptr some = al_.allocate(1);
+      node_type::construct(some, ptr, head_, val);
+      some->bind();
+    }
   };
 
   /*  Parametarised constructor
@@ -125,13 +140,13 @@ class list {
   // const_reference front() const { return *begin(); }
   // const_reference back() const { return *(end() - 1); }
 
-  // //  List Iterators: --------------------------------------------------------
+  
   // iterator begin() { return iterator(&head_) + 1; }
   // iterator end() { return iterator(&head_); }
 
-  // bool empty() const noexcept { return !node_c_;}
-  // size_type max_size() const noexcept { return al_traits::max_size(al_); }
-  // size_type size() const noexcept { return node_c_; }
+  bool empty() const noexcept { return !node_c_;}
+  size_t max_size() const noexcept { return al_traits::max_size(al_); }
+  size_t size() const noexcept { return node_c_; }
 
   // //  void clear() {}
   // iterator insert(iterator pos, const_reference value) {
@@ -367,19 +382,46 @@ class list {
  private:
   template <typename U>
   struct Node {
-    Node* prev_;
-    Node* next_;
-    U data_;
+    using value_type = U;
+    using pointer = Node*;
 
-    // static void construct(Node* where, Node* prev, Node* next) {
-    //   operator new(where) Node*(prev_ );
-    // }
-    // static void construct(Node* where, Node* prev, Node* next, U val);
+    pointer construct(pointer prev = nullptr, pointer next = nullptr) {
+      new(this) pointer(prev);
+      new(reinterpret_cast<uint8_t*>(this) + sizeof(pointer)) pointer(next);
+      return this;
+    }
+    pointer construct(U val) {
+      new(reinterpret_cast<uint8_t*>(this) + 2*sizeof(pointer)) U(val);
+      return this;
+    }
+    pointer construct(pointer prev, pointer next, U val) {
+      construct(prev, next);
+      return construct(val);
+    }
+  
+    pointer construct_head() {
+      this->construct();
+      if constexpr (std::is_default_constructible<T>::value)
+        this->construct(T());
+      return this;
+    }
+
+    pointer next() { return next_;}
+    pointer prev() { return prev_;}
+
+    void bind(pointer lhs, pointer rhs) {
+      lhs->next_ = this;
+      rhs->prev_ = this;
+    }
+
+    pointer prev_;
+    pointer next_;
+    U data_;
   };
 
-  allocator_type al_;
+  rebind_alloc al_;
   size_t node_c_;
-  node_type* head_;
+  node_ptr head_;
 };
 
 }  // namespace s21
