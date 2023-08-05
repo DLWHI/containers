@@ -20,12 +20,9 @@ constexpr int loop = 50;
 
 TEST(ListTest, ctor_default) {
   dlwhi::list<dummyCpy> lst;
-  // EXPECT_EQ(lst.size(), 0);
-  // EXPECT_EQ(lst.capacity(), 0);
-  // EXPECT_EQ(lst.data(), nullptr);
-  // EXPECT_THROW(lst.at(uid(gen)), std::out_of_range);
+  EXPECT_EQ(lst.size(), 0);
+  EXPECT_TRUE(lst.empty());
 }
-
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

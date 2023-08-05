@@ -54,7 +54,7 @@ class list {
     for (size_t i = 0; i < node_c_; ++i, ptr = ptr->next()) {
       node_ptr some = al_.allocate(1);
       node_type::construct(some, ptr, head_, val);
-      some->bind();
+      some->bind(ptr, head_);
     }
   };
 
