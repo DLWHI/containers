@@ -10,10 +10,10 @@ using diff_t = int64_t;
 template <typename BidIt>
 class reverse_iterator {
  public:
-  using iterator_category = BidIt::iterator_category;
-  using value_type = BidIt::value_type;
-  using pointer = BidIt::pointer;
-  using reference = BidIt::reference;
+  using iterator_category = typename BidIt::iterator_category;
+  using value_type = typename BidIt::value_type;
+  using pointer = typename BidIt::pointer;
+  using reference = typename BidIt::reference;
 
   constexpr reverse_iterator() = default;
   constexpr explicit reverse_iterator(BidIt it) noexcept : fwd_it_(it){};

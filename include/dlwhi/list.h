@@ -15,12 +15,13 @@ using size_t = int64_t;
 
 template <typename T, typename Allocator = std::allocator<T>>
 class list {
-  template <typename U>
+  template <typename U, typename Al>
   struct Node;
 
-  using node_type = Node<T>;
-  using node_ptr = Node<T>::pointer;
+  using node_type = Node<T, Allocator>;
+  using node_ptr = typename Node<T, Allocator>::pointer;
   using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_type>;
+  using rebind_traits = std::allocator_traits<rebind_alloc>;
  public:
   template <typename U>
   class ListIterator;
@@ -32,7 +33,7 @@ class list {
   using const_reference = const T&;
   using move_reference = T&&;
 
-  using allocator_type = rebind_alloc;
+  using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
 
   // using iterator = dlwhi::iterator<T, vector>;
@@ -40,16 +41,16 @@ class list {
   // using reverse_iterator = dlwhi::reverse_iterator<iterator>;
   // using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
-  list() : al_(Allocator()), head_(al_.allocate(1)), node_c_(0){
-    head_->construct_head();
+  list() : al_(Allocator()), node_c_(0), head_(node_al_.allocate(1)){
+    head_->construct_head(al_);
   };
 
-  explicit list(Allocator& alloc) : al_(alloc), head_(al_.allocate(1)), node_c_(0){
-    head_->construct_head();
+  explicit list(Allocator& alloc) : al_(alloc), node_c_(0), head_(node_al_.allocate(1)){
+    head_->construct_head(al_);
   };
 
   list(size_t count, const_reference val, Allocator& alloc = Allocator()) 
-      : al_(alloc), head_(al_.allocate(1)), node_c_(count){
+      : al_(alloc), node_c_(count), head_(al_.allocate(1)){
     node_ptr ptr = head_->construct_head();
     for (size_t i = 0; i < node_c_; ++i, ptr = ptr->next()) {
       node_ptr some = al_.allocate(1);
@@ -380,29 +381,32 @@ class list {
   // };
 
  private:
-  template <typename U>
+  template <typename U, typename Al>
   struct Node {
     using value_type = U;
     using pointer = Node*;
+    using allocator_type = Al;
+    using al_traits = std::allocator_traits<allocator_type>;
 
     pointer construct(pointer prev = nullptr, pointer next = nullptr) {
       new(this) pointer(prev);
       new(reinterpret_cast<uint8_t*>(this) + sizeof(pointer)) pointer(next);
       return this;
     }
-    pointer construct(U val) {
-      new(reinterpret_cast<uint8_t*>(this) + 2*sizeof(pointer)) U(val);
+    pointer construct(U val, allocator_type& al) {
+      uint8_t* ptr = reinterpret_cast<uint8_t*>(this) + 2*sizeof(pointer);
+      al_traits::construct(al, reinterpret_cast<U*>(ptr), val);
       return this;
     }
-    pointer construct(pointer prev, pointer next, U val) {
+    pointer construct(pointer prev, pointer next, U val, allocator_type& al) {
       construct(prev, next);
-      return construct(val);
+      return construct(val, al);
     }
   
-    pointer construct_head() {
+    pointer construct_head(allocator_type& al) {
       this->construct();
       if constexpr (std::is_default_constructible<T>::value)
-        this->construct(T());
+        this->construct(T(), al);
       return this;
     }
 
@@ -419,7 +423,8 @@ class list {
     U data_;
   };
 
-  rebind_alloc al_;
+  rebind_alloc node_al_;
+  allocator_type al_;
   size_t node_c_;
   node_ptr head_;
 };

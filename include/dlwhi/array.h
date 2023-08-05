@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include "iterator.h"
+#include "pointer_iterator.h"
 #include "reverse_iterator.h"
 
 namespace dlwhi {
@@ -20,8 +20,8 @@ struct array {
   using reference = T&;
   using const_reference = const T&;
 
-  using iterator = dlwhi::iterator<T, array>;
-  using const_iterator = dlwhi::iterator<const T, array>;
+  using iterator = dlwhi::pointer_iterator<T, array>;
+  using const_iterator = dlwhi::pointer_iterator<const T, array>;
   using reverse_iterator = dlwhi::reverse_iterator<iterator>;
   using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 

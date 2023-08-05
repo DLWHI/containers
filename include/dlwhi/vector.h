@@ -8,7 +8,7 @@
 #include <type_traits>
 #include <utility>
 
-#include "iterator.h"
+#include "pointer_iterator.h"
 #include "reverse_iterator.h"
 
 namespace dlwhi {
@@ -29,14 +29,14 @@ class vector {
   using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
 
-  using iterator = dlwhi::iterator<T, vector>;
-  using const_iterator = dlwhi::iterator<const T, vector>;
+  using iterator = dlwhi::pointer_iterator<T, vector>;
+  using const_iterator = dlwhi::pointer_iterator<const T, vector>;
   using reverse_iterator = dlwhi::reverse_iterator<iterator>;
   using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
   static constexpr dlwhi::size_t kCapMul = 2;
 
-  constexpr vector() noexcept(noexcept(Allocator())) : al_(Allocator()), ptr_(nullptr), size_(0), capacity_(0){};
+  constexpr vector() noexcept(noexcept(Allocator())) : al_(Allocator()), size_(0), capacity_(0), ptr_(nullptr){};
 
   constexpr explicit vector(const Allocator& alloc) noexcept 
       : al_(alloc), size_(0), capacity_(0), ptr_(nullptr){};
