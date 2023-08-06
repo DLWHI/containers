@@ -88,7 +88,7 @@ class list {
 
   list& operator=(list& other) {
     list cpy(other);
-    *this = std::move(other);
+    *this = std::move(cpy);
     return *this;
   }
 

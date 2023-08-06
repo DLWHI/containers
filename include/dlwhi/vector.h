@@ -93,7 +93,7 @@ class vector {
     al_.deallocate(ptr_, capacity_);
   }
 
-  constexpr allocator_type get_allocator() { 
+  constexpr allocator_type get_allocator() const noexcept { 
     return allocator_type(al_);
   }
 

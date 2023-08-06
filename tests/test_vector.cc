@@ -44,7 +44,7 @@ constexpr int constexpr_check(int val) {
 }
 
 TEST(VectorTest, ctor_default) {
-  dlwhi::vector<dummyCpy> vec;
+  const dlwhi::vector<dummyCpy> vec;
   EXPECT_EQ(vec.size(), 0);
   EXPECT_EQ(vec.capacity(), 0);
   EXPECT_EQ(vec.data(), nullptr);
@@ -54,7 +54,7 @@ TEST(VectorTest, ctor_default) {
 TEST(VectorTest, ctor_size_alloc_not_default) {
   dlwhi::size_t size = uid(gen);
   std::allocator<dummyCpy> not_default;
-  dlwhi::vector<dummyCpy> vec(size, not_default);
+  const dlwhi::vector<dummyCpy> vec(size, not_default);
 
   EXPECT_EQ(vec.size(), size);
   EXPECT_EQ(vec.capacity(), size);
@@ -65,7 +65,7 @@ TEST(VectorTest, ctor_size_alloc_not_default) {
 
 TEST(VectorTest, ctor_size) {
   dlwhi::size_t size = uid(gen);
-  std::vector<dummyCpy> vec(size);
+  const dlwhi::vector<dummyCpy> vec(size);
 
   EXPECT_EQ(vec.size(), size);
   EXPECT_EQ(vec.capacity(), size);
@@ -77,7 +77,7 @@ TEST(VectorTest, ctor_size) {
 TEST(VectorTest, ctor_size_value) {
   dlwhi::size_t size = uid(gen);
   std::allocator<dummyCpy> not_default;
-  dlwhi::vector<dummyCpy> vec(size, dummyCpy("not default"), not_default);
+  const dlwhi::vector<dummyCpy> vec(size, dummyCpy("not default"), not_default);
 
   EXPECT_EQ(vec.size(), size);
   EXPECT_EQ(vec.capacity(), size);
@@ -88,10 +88,10 @@ TEST(VectorTest, ctor_size_value) {
 
 TEST(VectorTest, ctor_from_stl_vector) {
   dlwhi::size_t size = uid(gen);
-  std::allocator<dummyCpy> not_default;
+  const std::allocator<dummyCpy> not_default;
   std::vector<dummyCpy> from(size, dummyCpy("not default"));
 
-  dlwhi::vector<dummyCpy> vec(from.begin(), from.end(), not_default);
+  const dlwhi::vector<dummyCpy> vec(from.begin(), from.end(), not_default);
   EXPECT_EQ(vec.size(), from.size());
   EXPECT_EQ(vec.capacity(), from.capacity());
   EXPECT_NE(vec.data(), nullptr);
@@ -104,7 +104,7 @@ TEST(VectorTest, ctor_from_stl_list) {
   std::allocator<dummyCpy> not_default;
   std::list<dummyCpy> from(size, dummyCpy("not default"));
 
-  dlwhi::vector<dummyCpy> vec(from.begin(), from.end(), not_default);
+  const dlwhi::vector<dummyCpy> vec(from.begin(), from.end(), not_default);
 
   EXPECT_EQ(vec.size(), from.size());
   EXPECT_NE(vec.data(), nullptr);
@@ -123,7 +123,7 @@ TEST(VectorTest, ctor_init_list) {
   };
 
   std::allocator<std::string> not_default;
-  dlwhi::vector<std::string> vec(list, not_default);
+  const dlwhi::vector<std::string> vec(list, not_default);
   EXPECT_EQ(vec.size(), list.size());
   EXPECT_EQ(vec.capacity(), list.size());
   EXPECT_NE(vec.data(), nullptr);
@@ -131,7 +131,7 @@ TEST(VectorTest, ctor_init_list) {
 }
 
 TEST(VectorTest, ctor_init_list_implicit) {
-  dlwhi::vector<std::string> vec{
+  const dlwhi::vector<std::string> vec{
     "Karen",
     "Anastasia",
     "Alice",
@@ -148,8 +148,8 @@ TEST(VectorTest, ctor_init_list_implicit) {
 
 TEST(VectorTest, ctor_copy) {
   dlwhi::size_t size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
-  dlwhi::vector<dummyCpy> vec2(vec1);
+  const dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
+  const dlwhi::vector<dummyCpy> vec2(vec1);
 
   EXPECT_EQ(vec1.size(), vec2.size());
   EXPECT_EQ(vec1.capacity(), vec2.capacity());
@@ -161,7 +161,7 @@ TEST(VectorTest, ctor_copy) {
 TEST(VectorTest, ctor_move) {
   dlwhi::size_t size = uid(gen);
   dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
-  dlwhi::vector<dummyCpy> vec2(std::move(vec1));
+  const dlwhi::vector<dummyCpy> vec2(std::move(vec1));
 
   EXPECT_EQ(vec2.size(), size);
   EXPECT_EQ(vec2.capacity(), size);
@@ -174,7 +174,7 @@ TEST(VectorTest, ctor_move_alloc_not_default) {
   dlwhi::size_t size = uid(gen);
   state_allocator<dummyCpy> not_default("not default");
   dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec1(size, dummyCpy("not default"), state_allocator<dummyCpy>("default"));
-  dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec2(std::move(vec1), not_default);
+  const dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec2(std::move(vec1), not_default);
 
   EXPECT_EQ(vec2.size(), size);
   EXPECT_EQ(vec2.capacity(), size);
@@ -186,7 +186,7 @@ TEST(VectorTest, ctor_move_alloc_not_default) {
 
 TEST(VectorTest, ctor_ass_copy) {
   dlwhi::size_t size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
+  const dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
   dlwhi::vector<dummyCpy> vec2;
 
   vec2 = vec1;
@@ -216,8 +216,8 @@ TEST(VectorTest, ctor_ass_move) {
 
 TEST(VectorTest, comparison_1) {
   dlwhi::size_t size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("equal"));
-  dlwhi::vector<dummyCpy> vec2(size, dummyCpy("equal"));
+  const dlwhi::vector<dummyCpy> vec1(size, dummyCpy("equal"));
+  const dlwhi::vector<dummyCpy> vec2(size, dummyCpy("equal"));
 
   EXPECT_TRUE(vec1 == vec2);
   EXPECT_FALSE(vec1 != vec2);
@@ -226,8 +226,8 @@ TEST(VectorTest, comparison_1) {
 }
 
 TEST(VectorTest, comparison_2) {
-  dlwhi::vector<dummyCpy> vec1(uid(gen), dummyCpy("not equal"));
-  dlwhi::vector<dummyCpy> vec2(uid(gen), dummyCpy("equal"));
+  const dlwhi::vector<dummyCpy> vec1(uid(gen), dummyCpy("not equal"));
+  const dlwhi::vector<dummyCpy> vec2(uid(gen), dummyCpy("equal"));
 
   EXPECT_FALSE(vec1 == vec2);
   EXPECT_TRUE(vec1 != vec2);
@@ -236,8 +236,8 @@ TEST(VectorTest, comparison_2) {
 }
 
 TEST(VectorTest, comparison_3) {
-  dlwhi::vector<dummyCpy> vec1(uid(gen), dummyCpy("not equal"));
-  dlwhi::vector<dummyCpy> vec2;
+  const dlwhi::vector<dummyCpy> vec1(uid(gen), dummyCpy("not equal"));
+  const dlwhi::vector<dummyCpy> vec2;
 
   EXPECT_FALSE(vec1 == vec2);
   EXPECT_TRUE(vec1 != vec2);
@@ -246,15 +246,15 @@ TEST(VectorTest, comparison_3) {
 }
 
 TEST(VectorTest, comparison_self) {
-  dlwhi::vector<dummyCpy> vec(uid(gen), dummyCpy("not equal"));
+  const dlwhi::vector<dummyCpy> vec(uid(gen), dummyCpy("not equal"));
 
   EXPECT_TRUE(vec == vec);
   EXPECT_FALSE(vec != vec);
 }
 
 TEST(VectorTest, comparison_empty) {
-  dlwhi::vector<dummyCpy> vec1;
-  dlwhi::vector<dummyCpy> vec2;
+  const dlwhi::vector<dummyCpy> vec1;
+  const dlwhi::vector<dummyCpy> vec2;
 
   EXPECT_TRUE(vec1 == vec2);
   EXPECT_FALSE(vec1 != vec2);
@@ -297,8 +297,8 @@ TEST(VectorTest, front_back_access) {
 }
 
 TEST(VectorTest, data_access) {
-  dlwhi::vector<int> vec(uid(gen), 666);
-  int* ptr = vec.data();
+  const dlwhi::vector<int> vec(uid(gen), 666);
+  const int* ptr = vec.data();
   for (int i = 0; i < vec.size(); i++)
     EXPECT_EQ(ptr[i], 666);
 }

@@ -27,8 +27,9 @@ class node_iterator {
 
   constexpr T* base() const noexcept { return node_; }
 
-  constexpr reference operator*() noexcept { return node_->value(); }
-  constexpr pointer operator->() noexcept { return &node_->value(); }
+  // static type checking?
+  constexpr decltype(T().value()) operator*() noexcept { return node_->value(); }
+  constexpr decltype(&T().value()) operator->() noexcept { return &node_->value(); }
 
   constexpr bool operator==(const node_iterator& other) const noexcept {
     return node_ == other.node_;
