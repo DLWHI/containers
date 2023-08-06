@@ -25,6 +25,7 @@ class vector {
   using reference = T&;
   using const_reference = const T&;
   using move_reference = T&&;
+  using size_t = int64_t;
 
   using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
@@ -34,19 +35,19 @@ class vector {
   using reverse_iterator = dlwhi::reverse_iterator<iterator>;
   using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
-  static constexpr dlwhi::size_t kCapMul = 2;
+  static constexpr size_t kCapMul = 2;
 
   constexpr vector() noexcept(noexcept(Allocator())) : al_(Allocator()), size_(0), capacity_(0), ptr_(nullptr){};
 
   constexpr explicit vector(const Allocator& alloc) noexcept 
       : al_(alloc), size_(0), capacity_(0), ptr_(nullptr){};
 
-  constexpr explicit vector(dlwhi::size_t size, const Allocator& alloc = Allocator()) 
+  constexpr explicit vector(size_t size, const Allocator& alloc = Allocator()) 
       : al_(alloc), size_(size), capacity_(size_), ptr_(al_.allocate(size)) {
     construct_multiple(ptr_, size_);
   };
 
-  constexpr explicit vector(dlwhi::size_t size, const_reference value, const Allocator& alloc = Allocator())
+  constexpr explicit vector(size_t size, const_reference value, const Allocator& alloc = Allocator())
       : al_(alloc), size_(size), capacity_(size_), ptr_(al_.allocate(size)) {
     construct_multiple(ptr_, size_, value);
   };
@@ -67,8 +68,7 @@ class vector {
   constexpr vector(const vector& other, const Allocator& alloc) 
       : vector(other.begin(), other.end(), alloc){};
 
-  constexpr vector(vector&& other, const Allocator& alloc) noexcept
-    : size_(0), capacity_(0), ptr_(nullptr), al_(alloc) {
+  constexpr vector(vector&& other, const Allocator& alloc) noexcept : vector(alloc)  {
     std::swap(capacity_, other.capacity_);
     std::swap(size_, other.size_);
     std::swap(ptr_, other.ptr_);
@@ -89,7 +89,7 @@ class vector {
   }
 
   constexpr virtual ~vector() {
-    destroy_multiple(ptr_, size_);
+    destroy_multiple(ptr_, ptr_ + size_);
     al_.deallocate(ptr_, capacity_);
   }
 
@@ -97,11 +97,11 @@ class vector {
     return allocator_type(al_);
   }
 
-  constexpr reference at(dlwhi::size_t pos) {
+  constexpr reference at(size_t pos) {
     return (0 <= pos && pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
-  constexpr const_reference at(dlwhi::size_t pos) const {
+  constexpr const_reference at(size_t pos) const {
     return (0 <= pos && pos < size_) ? ptr_[pos] : throw std::out_of_range("Accessing element out of bounds");
   }
 
@@ -136,9 +136,9 @@ class vector {
   }
 
   constexpr bool empty() const noexcept { return !size_; }
-  constexpr dlwhi::size_t size() const noexcept { return size_; }
-  constexpr dlwhi::size_t capacity() const noexcept { return capacity_; }
-  constexpr dlwhi::size_t max_size() const noexcept {
+  constexpr size_t size() const noexcept { return size_; }
+  constexpr size_t capacity() const noexcept { return capacity_; }
+  constexpr size_t max_size() const noexcept {
     return al_traits::max_size(al_);
   }
 
@@ -146,12 +146,12 @@ class vector {
     return assign(values.begin(), values.end());
   }
 
-  constexpr vector& assign(dlwhi::size_t count, const_reference value);
+  constexpr vector& assign(size_t count, const_reference value);
 
   template <typename InputIterator>
   constexpr vector& assign(InputIterator start, InputIterator end);
 
-  constexpr vector& reserve(dlwhi::size_t count) {
+  constexpr vector& reserve(size_t count) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid reserve space");
     } else if (count > capacity_) {
@@ -174,14 +174,14 @@ class vector {
   }
 
   constexpr vector& clear() {
-    destroy_multiple(ptr_, size_);
+    destroy_multiple(ptr_, ptr_ + size_);
     size_ = 0;
     return *this;
   }
 
-  constexpr vector& resize(dlwhi::size_t count) { return resize(count, value_type()); }
+  constexpr vector& resize(size_t count) { return resize(count, value_type()); }
 
-  constexpr vector& resize(dlwhi::size_t count, const_reference value);
+  constexpr vector& resize(size_t count, const_reference value);
 
   constexpr vector& push_back(const_reference value) { 
     place_at(end(), std::forward<const value_type>(value));
@@ -215,6 +215,15 @@ class vector {
     return iterator(dest);
   }
 
+  constexpr iterator erase(const_iterator start, const_iterator end) {
+    pointer first = ptr_ + (start - begin());
+    pointer last = ptr_ + (end - begin());
+    destroy_multiple(first, last);
+    move_chunk_left(last, ptr_ + size_, first);
+    size_ -= last - first;
+    return iterator(first);
+  }
+
   template <typename... Args>
   constexpr iterator emplace(const_iterator pos, Args&&... values) {
     return place_at<Args...>(pos, std::forward<Args>(values)...);
@@ -226,8 +235,8 @@ class vector {
     return *this;
   }
 
-  constexpr reference operator[](dlwhi::size_t i) { return ptr_[i]; }
-  constexpr value_type operator[](dlwhi::size_t i) const { return ptr_[i]; }
+  constexpr reference operator[](size_t i) { return ptr_[i]; }
+  constexpr value_type operator[](size_t i) const { return ptr_[i]; }
 
   constexpr vector& swap(vector& other) noexcept(al_traits::propagate_on_container_swap::value
                                               || al_traits::is_always_equal::value) {
@@ -241,7 +250,7 @@ class vector {
 
   constexpr bool operator==(const vector& other) const {
     if (size_ != other.size_) return false;
-    for (dlwhi::size_t i = 0; i < size_; i++)
+    for (size_t i = 0; i < size_; i++)
       if (ptr_[i] != other.ptr_[i]) return false;
     return true;
   }
@@ -251,7 +260,7 @@ class vector {
   }
 
   friend std::ostream& operator<<(std::ostream& os, const vector& vec) {
-    for (dlwhi::size_t i = 0; i < vec.size_ - 1; i++) os << vec.ptr_[i] << ' ';
+    for (size_t i = 0; i < vec.size_ - 1; i++) os << vec.ptr_[i] << ' ';
     os << vec.ptr_[vec.size_ - 1];
     return os;
   }
@@ -264,13 +273,18 @@ class vector {
   }
 
   template <typename... Args>
-  constexpr void construct_multiple(pointer where, dlwhi::size_t count, Args&&... args) {
-    for (dlwhi::size_t i = 0; i < count; ++i, ++where) 
+  constexpr void construct_multiple(pointer where, size_t count, Args&&... args) {
+    for (; count; --count, ++where) 
       al_traits::construct(al_, where, std::forward<Args>(args)...);
   }
 
-  constexpr void destroy_multiple(pointer start, dlwhi::size_t count) {
-    for (dlwhi::size_t i = 0; i < count; ++i, ++start) al_traits::destroy(al_, start);
+  template <typename InputIterator>
+  constexpr void destroy_multiple(InputIterator left, InputIterator right) {
+    for (; left != right; ++left) al_traits::destroy(al_, left);
+  }
+
+  constexpr void destroy_multiple(pointer start, size_t count) {
+    for (; count; --count, ++start) al_traits::destroy(al_, start);
   }
 
   constexpr void move_chunk_left(pointer left, pointer right, pointer where) {
@@ -303,19 +317,19 @@ class vector {
   constexpr iterator place_at(const_iterator pos, Args&&... value);
 
   allocator_type al_;
-  dlwhi::size_t size_;
-  dlwhi::size_t capacity_;
+  size_t size_;
+  size_t capacity_;
   pointer ptr_;
 };
 
 template <typename T, class Allocator>
 constexpr vector<T, Allocator>&
-vector<T, Allocator>::assign(dlwhi::size_t count, const_reference value) {
+vector<T, Allocator>::assign(size_t count, const_reference value) {
   if (count > max_size() || count < 0) {
     throw std::length_error("Invalid assign count");
   }
   pointer mem = ptr_;
-  destroy_multiple(ptr_, size_);
+  destroy_multiple(ptr_, ptr_ + size_);
   if (count > capacity_) {
     mem = al_.allocate(count);
     swap_buffers(mem);
@@ -330,12 +344,12 @@ template <typename T, class Allocator>
 template <typename InputIterator>
 constexpr vector<T, Allocator>&
 vector<T, Allocator>::assign(InputIterator start, InputIterator end) {
-  dlwhi::size_t count = std::distance(start, end);
+  size_t count = std::distance(start, end);
   if (count > max_size() || count < 0) {
     throw std::length_error("Distance between start and end iterators is negative or too big");
   }
   pointer mem = ptr_;
-  destroy_multiple(mem, size_);
+  destroy_multiple(mem, ptr_ + size_);
   if (count > capacity_) {
     mem = al_.allocate(count);
     swap_buffers(mem);
@@ -348,14 +362,14 @@ vector<T, Allocator>::assign(InputIterator start, InputIterator end) {
 
 template <typename T, class Allocator>
 constexpr vector<T, Allocator>&
-vector<T, Allocator>::resize(dlwhi::size_t count, const_reference value) {
+vector<T, Allocator>::resize(size_t count, const_reference value) {
   if (count > max_size() || count < 0) {
     throw std::length_error("Invalid resize space");
   }
   if (size_ == count)
     return *this;
   else if (size_ > count) {
-    destroy_multiple(ptr_ + count, size_ - count);
+    destroy_multiple(ptr_ + count, ptr_ + size_);
   } else {
     if (count > capacity_) {
       pointer mem = al_.allocate(count);
@@ -374,7 +388,7 @@ template <typename... Args>
 constexpr typename vector<T, Allocator>::iterator 
 vector<T, Allocator>::place_at(const_iterator pos,
                                Args&&... value) {
-  dlwhi::size_t delta = pos - begin();
+  size_t delta = pos - begin();
   if (size_ >= capacity_) {
     pointer mem = al_.allocate(std::max(capacity_ * kCapMul, size_ + 1));
     al_traits::construct(al_, mem + delta, std::forward<Args>(value)...);

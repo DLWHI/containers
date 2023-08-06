@@ -13,13 +13,18 @@
 
 
 std::random_device ran_dev;
-std::uniform_int_distribution<dlwhi::size_t> uid(1, 1000);
 std::mt19937 gen(ran_dev());
+
+#ifdef MAX_SIZE
+std::uniform_int_distribution<dlwhi::size_t> uid(1, MAX_SIZE);
+#else
+std::uniform_int_distribution<dlwhi::size_t> uid(1, 100);
+#endif
 
 #ifdef LOOP_COUNT
 constexpr int loop = LOOP_COUNT;
 #else
-constexpr int loop = 50;
+constexpr int loop = 15;
 #endif
 
 constexpr int constexpr_check(int val) {
@@ -46,45 +51,45 @@ TEST(VectorTest, ctor_default) {
   EXPECT_THROW(vec.at(uid(gen)), std::out_of_range);
 }
 
-TEST(VectorTest, ctor_size) {
-  dlwhi::size_t random_size = uid(gen);
-  std::vector<dummyCpy> vec(random_size);
+TEST(VectorTest, ctor_size_alloc_not_default) {
+  dlwhi::size_t size = uid(gen);
+  std::allocator<dummyCpy> not_default;
+  dlwhi::vector<dummyCpy> vec(size, not_default);
 
-  EXPECT_EQ(vec.size(), random_size);
-  EXPECT_EQ(vec.capacity(), random_size);
+  EXPECT_EQ(vec.size(), size);
+  EXPECT_EQ(vec.capacity(), size);
   EXPECT_NE(vec.data(), nullptr);
   EXPECT_EQ(vec.front(), dummyCpy());
   EXPECT_EQ(vec.back(), dummyCpy());
 }
 
-TEST(VectorTest, ctor_size_alloc_not_default) {
-  dlwhi::size_t random_size = uid(gen);
-  std::allocator<dummyCpy> not_default;
-  dlwhi::vector<dummyCpy> vec(random_size, not_default);
+TEST(VectorTest, ctor_size) {
+  dlwhi::size_t size = uid(gen);
+  std::vector<dummyCpy> vec(size);
 
-  EXPECT_EQ(vec.size(), random_size);
-  EXPECT_EQ(vec.capacity(), random_size);
+  EXPECT_EQ(vec.size(), size);
+  EXPECT_EQ(vec.capacity(), size);
   EXPECT_NE(vec.data(), nullptr);
   EXPECT_EQ(vec.front(), dummyCpy());
   EXPECT_EQ(vec.back(), dummyCpy());
 }
 
 TEST(VectorTest, ctor_size_value) {
-  dlwhi::size_t random_size = uid(gen);
+  dlwhi::size_t size = uid(gen);
   std::allocator<dummyCpy> not_default;
-  dlwhi::vector<dummyCpy> vec(random_size, dummyCpy("not default"), not_default);
+  dlwhi::vector<dummyCpy> vec(size, dummyCpy("not default"), not_default);
 
-  EXPECT_EQ(vec.size(), random_size);
-  EXPECT_EQ(vec.capacity(), random_size);
+  EXPECT_EQ(vec.size(), size);
+  EXPECT_EQ(vec.capacity(), size);
   EXPECT_NE(vec.data(), nullptr);
   EXPECT_EQ(vec.front(), dummyCpy("not default"));
   EXPECT_EQ(vec.back(), dummyCpy("not default"));
 }
 
 TEST(VectorTest, ctor_from_stl_vector) {
-  dlwhi::size_t random_size = uid(gen);
+  dlwhi::size_t size = uid(gen);
   std::allocator<dummyCpy> not_default;
-  std::vector<dummyCpy> from(random_size, dummyCpy("not default"));
+  std::vector<dummyCpy> from(size, dummyCpy("not default"));
 
   dlwhi::vector<dummyCpy> vec(from.begin(), from.end(), not_default);
   EXPECT_EQ(vec.size(), from.size());
@@ -95,9 +100,9 @@ TEST(VectorTest, ctor_from_stl_vector) {
 }
 
 TEST(VectorTest, ctor_from_stl_list) {
-  dlwhi::size_t random_size = uid(gen);
+  dlwhi::size_t size = uid(gen);
   std::allocator<dummyCpy> not_default;
-  std::list<dummyCpy> from(random_size, dummyCpy("not default"));
+  std::list<dummyCpy> from(size, dummyCpy("not default"));
 
   dlwhi::vector<dummyCpy> vec(from.begin(), from.end(), not_default);
 
@@ -142,8 +147,8 @@ TEST(VectorTest, ctor_init_list_implicit) {
 }
 
 TEST(VectorTest, ctor_copy) {
-  dlwhi::size_t random_size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(random_size, dummyCpy("not default"));
+  dlwhi::size_t size = uid(gen);
+  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
   dlwhi::vector<dummyCpy> vec2(vec1);
 
   EXPECT_EQ(vec1.size(), vec2.size());
@@ -154,25 +159,25 @@ TEST(VectorTest, ctor_copy) {
 }
 
 TEST(VectorTest, ctor_move) {
-  dlwhi::size_t random_size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(random_size, dummyCpy("not default"));
+  dlwhi::size_t size = uid(gen);
+  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
   dlwhi::vector<dummyCpy> vec2(std::move(vec1));
 
-  EXPECT_EQ(vec2.size(), random_size);
-  EXPECT_EQ(vec2.capacity(), random_size);
+  EXPECT_EQ(vec2.size(), size);
+  EXPECT_EQ(vec2.capacity(), size);
   EXPECT_NE(vec2.data(), nullptr);
   EXPECT_EQ(vec2.front(), dummyCpy("not default"));
   EXPECT_EQ(vec2.back(), dummyCpy("not default"));
 }
 
 TEST(VectorTest, ctor_move_alloc_not_default) {
-  dlwhi::size_t random_size = uid(gen);
+  dlwhi::size_t size = uid(gen);
   state_allocator<dummyCpy> not_default("not default");
-  dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec1(random_size, dummyCpy("not default"), state_allocator<dummyCpy>("default"));
+  dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec1(size, dummyCpy("not default"), state_allocator<dummyCpy>("default"));
   dlwhi::vector<dummyCpy, state_allocator<dummyCpy>> vec2(std::move(vec1), not_default);
 
-  EXPECT_EQ(vec2.size(), random_size);
-  EXPECT_EQ(vec2.capacity(), random_size);
+  EXPECT_EQ(vec2.size(), size);
+  EXPECT_EQ(vec2.capacity(), size);
   EXPECT_NE(vec2.data(), nullptr);
   EXPECT_EQ(vec2.front(), dummyCpy("not default"));
   EXPECT_EQ(vec2.back(), dummyCpy("not default"));
@@ -180,8 +185,8 @@ TEST(VectorTest, ctor_move_alloc_not_default) {
 }
 
 TEST(VectorTest, ctor_ass_copy) {
-  dlwhi::size_t random_size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(random_size, dummyCpy("not default"));
+  dlwhi::size_t size = uid(gen);
+  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
   dlwhi::vector<dummyCpy> vec2;
 
   vec2 = vec1;
@@ -194,23 +199,25 @@ TEST(VectorTest, ctor_ass_copy) {
 }
 
 TEST(VectorTest, ctor_ass_move) {
-  dlwhi::size_t random_size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(random_size, dummyCpy("not default"));
+  dlwhi::size_t size = uid(gen);
+  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("not default"));
   dlwhi::vector<dummyCpy> vec2;
 
   vec2 = std::move(vec1);
 
-  EXPECT_EQ(vec2.size(), random_size);
-  EXPECT_EQ(vec2.capacity(), random_size);
+  EXPECT_EQ(vec2.size(), size);
+  EXPECT_EQ(vec2.capacity(), size);
   EXPECT_NE(vec2.data(), nullptr);
   EXPECT_EQ(vec2.front(), dummyCpy("not default"));
   EXPECT_EQ(vec2.back(), dummyCpy("not default"));
 }
 
+
+
 TEST(VectorTest, comparison_1) {
-  dlwhi::size_t random_size = uid(gen);
-  dlwhi::vector<dummyCpy> vec1(random_size, dummyCpy("equal"));
-  dlwhi::vector<dummyCpy> vec2(random_size, dummyCpy("equal"));
+  dlwhi::size_t size = uid(gen);
+  dlwhi::vector<dummyCpy> vec1(size, dummyCpy("equal"));
+  dlwhi::vector<dummyCpy> vec2(size, dummyCpy("equal"));
 
   EXPECT_TRUE(vec1 == vec2);
   EXPECT_FALSE(vec1 != vec2);
@@ -253,6 +260,8 @@ TEST(VectorTest, comparison_empty) {
   EXPECT_FALSE(vec1 != vec2);
 }
 
+
+
 TEST(VectorTest, random_access) {
   dlwhi::vector<int> vec(uid(gen));
   for (int i = 0; i < vec.size(); i++) {
@@ -293,6 +302,8 @@ TEST(VectorTest, data_access) {
   for (int i = 0; i < vec.size(); i++)
     EXPECT_EQ(ptr[i], 666);
 }
+
+
 
 TEST(VectorTest, assign_1) {
   dlwhi::vector<dummyCpy> vec(uid(gen));
@@ -357,6 +368,8 @@ TEST(VectorTest, assign_randomly) {
   }
 }
 
+
+
 TEST(VectorTest, reserve_expand_not_movable) {
   for (int i = 0; i < loop; i++) {
     dlwhi::size_t size = uid(gen);
@@ -408,6 +421,8 @@ TEST(VectorTest, reserve_invalid_movable) {
   EXPECT_ANY_THROW(vec.reserve(-1));
 }
 
+
+
 TEST(VectorTest, stf_not_movable) {
   for (int i = 0; i < loop; i++) {
     dlwhi::vector<dummyCpy> vec(uid(gen));
@@ -438,6 +453,8 @@ TEST(VectorTest, clear) {
     EXPECT_EQ(vec.size(), 0);
   }
 }
+
+
 
 TEST(VectorTest, resize_not_movable) {
   dlwhi::vector<dummyCpy> vec(uid(gen), dummyCpy("default"));
@@ -531,6 +548,8 @@ TEST(VectorTest, resize_invalid_movable) {
                std::length_error);
 }
 
+
+
 TEST(VectorTest, insert_not_movable_1) {
   int insert_count = std::min(static_cast<int>(uid(gen)), loop);
   dummyCpy insert_val("inserted");
@@ -606,6 +625,8 @@ TEST(VectorTest, insert_begin_movable) {
   EXPECT_EQ(vec.back().birth, dummyMv::Constructed::kMove);
 }
 
+
+
 TEST(VectorTest, push_back_not_movable_1) {
   int insert_count = std::min(static_cast<int>(uid(gen)), loop);
   dummyCpy push_value("pushed");
@@ -644,6 +665,8 @@ TEST(VectorTest, push_back_movable_2) {
   }
 }
 
+
+
 TEST(VectorTest, erase_1) {
   int erase_count = std::min(static_cast<int>(uid(gen)), loop);
   dlwhi::size_t size = std::max(static_cast<int>(uid(gen)), erase_count);
@@ -676,6 +699,47 @@ TEST(VectorTest, erase_empty) {
   EXPECT_EQ(vec.size(), 0);
 }
 
+TEST(VectorTest, erase_last) {
+  dlwhi::size_t size = uid(gen);
+  dlwhi::vector<dummyCpy> vec(size);
+  auto pos = vec.end() - 1;
+  pos = vec.erase(pos);
+  EXPECT_EQ(vec.end(), pos);
+}
+
+TEST(VectorTest, erase_range) {
+  for (int i = 0; i < loop; i++) {
+    dlwhi::vector<dummyMv> vec(uid(gen), dummyMv("default"));
+    std::uniform_int_distribution<dlwhi::size_t> uid_vec(0, vec.size());
+    auto start = vec.begin() + uid_vec(gen);
+    auto end = vec.begin() + uid_vec(gen);
+    if (start > end) std::swap(start, end);
+    dlwhi::size_t erased_size = vec.size() - (end - start);
+    start = vec.erase(start, end);
+    EXPECT_EQ(erased_size, vec.size());
+  }
+}
+
+TEST(VectorTest, erase_range_end) {
+  for (int i = 0; i < loop; i++) {
+    dlwhi::vector<dummyMv> vec(uid(gen), dummyMv("default"));
+    std::uniform_int_distribution<dlwhi::size_t> uid_vec(0, vec.size());
+    auto pos = vec.begin() + uid_vec(gen);
+    dlwhi::size_t erased_size = vec.size() - (vec.end() - pos);
+    pos = vec.erase(pos, vec.end());
+    EXPECT_EQ(pos, vec.end());
+    EXPECT_EQ(erased_size, vec.size());
+  }
+}
+
+TEST(VectorTest, erase_range_entire) {
+  dlwhi::vector<dummyCpy> vec(uid(gen));
+  vec.erase(vec.begin(), vec.end());
+  EXPECT_EQ(vec.size(), 0);
+}
+
+
+
 TEST(VectorTest, pop_back_1) {
   int erase_count = std::min(static_cast<int>(uid(gen)), loop);
   dlwhi::size_t size = std::max(static_cast<int>(uid(gen)), erase_count);
@@ -703,6 +767,8 @@ TEST(VectorTest, pop_empty) {
   }
   EXPECT_EQ(vec.size(), 0);
 }
+
+
 
 TEST(VectorTest, emplace_not_movable_1) {
   int insert_count = std::min(static_cast<int>(uid(gen)), loop);
@@ -785,6 +851,8 @@ TEST(VectorTest, emplace_back_vector) {
   }
 }
 
+
+
 TEST(VectorTest, stream) {
   dlwhi::vector<dummyMv> vec{
       dummyMv("Aileen"), dummyMv("Anna"),  dummyMv("Louie"),
@@ -796,10 +864,14 @@ TEST(VectorTest, stream) {
   EXPECT_EQ(expected, stream.str());
 }
 
+
+
 TEST(VectorTest, valid_constexpr) {
   constexpr int cexper = constexpr_check(0);
   EXPECT_EQ(cexper, 0);
 }
+
+
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);

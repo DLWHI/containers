@@ -9,6 +9,9 @@
 #include <type_traits>
 #include <utility>
 
+#include "node_iterator.h"
+#include "reverse_iterator.h"
+
 namespace dlwhi {
 
 using size_t = int64_t;
@@ -19,7 +22,7 @@ class list {
   struct Node;
 
   using node_type = Node<T, Allocator>;
-  using node_ptr = typename Node<T, Allocator>::pointer;
+  using node_ptr = Node<T, Allocator>*;
   using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_type>;
   using rebind_traits = std::allocator_traits<rebind_alloc>;
  public:
@@ -32,118 +35,93 @@ class list {
   using reference = T&;
   using const_reference = const T&;
   using move_reference = T&&;
+  using size_t = int64_t;
 
   using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
 
-  // using iterator = dlwhi::iterator<T, vector>;
-  // using const_iterator = dlwhi::iterator<const T, vector>;
-  // using reverse_iterator = dlwhi::reverse_iterator<iterator>;
-  // using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
+  using iterator = dlwhi::node_iterator<node_type, list>;
+  using const_iterator = dlwhi::node_iterator<const node_type, list>;
+  using reverse_iterator = dlwhi::reverse_iterator<iterator>;
+  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
 
   list() : al_(Allocator()), node_c_(0), head_(node_al_.allocate(1)){
     head_->construct_head(al_);
   };
 
-  explicit list(Allocator& alloc) : al_(alloc), node_c_(0), head_(node_al_.allocate(1)){
+  explicit list(const Allocator& alloc) : al_(alloc), node_c_(0), head_(node_al_.allocate(1)){
     head_->construct_head(al_);
   };
 
-  list(size_t count, const_reference val, Allocator& alloc = Allocator()) 
-      : al_(alloc), node_c_(count), head_(al_.allocate(1)){
-    node_ptr ptr = head_->construct_head();
-    for (size_t i = 0; i < node_c_; ++i, ptr = ptr->next()) {
-      node_ptr some = al_.allocate(1);
-      node_type::construct(some, ptr, head_, val);
-      some->bind(ptr, head_);
-    }
+  list(size_t count, const_reference val, const Allocator& alloc = Allocator()) 
+      : al_(alloc), node_c_(count), head_(node_al_.allocate(1)){
+    head_->construct_head(al_);
+    construct_multiple_nodes(head_, count, val);
   };
 
-  /*  Parametarised constructor
-  in stl list is circular */
-  // list(size_type n) : list() {
-  //   Node* ptr = &head_;
-  //   for (size_type i = 0; i < n; ++i) {
-  //     Node* some = new Node{0, ptr, &head_};
-  //     ptr->next_ = some;
-  //     head_.prev_ = some;
-  //     ptr = ptr->next_;
-  //   }
-  //   counter_ = n;
-  // }
+  list(size_t count, const Allocator& alloc = Allocator()) 
+      : al_(alloc), node_c_(count), head_(node_al_.allocate(1)) {
+    head_->construct_head(al_);
+    construct_multiple_nodes(head_, count);
+  }
 
-  //  Copy constructor:
-  // list(const list& l) : list() {
-  //   const Node* ptrToL = l.head_.next_;
-  //   Node* ptrToCopy = &head_;
-  //   for (size_type i = 0; i < l.counter_; ++i) {
-  //     Node* some = new Node{ptrToL->data_, ptrToCopy, &head_};
-  //     ptrToCopy->next_ = some;
-  //     head_.prev_ = some;
-  //     ptrToCopy = ptrToCopy->next_;
-  //     ptrToL = ptrToL->next_;
-  //   }
-  //   counter_ = l.counter_;
-  // }
-  // //  Move constructor (no copying for anything but
-  // //  primitive types and rvalue is undefiened but consistent)
-  // list(list&& l) : list() {
-  //   //  using 'std::move' to make othar a rvalue and make
-  //   //  compilator to use move not copy
-  //   *this = std::move(l);
-  // }
-  // //  initializer list constructor, creates a list initizialized using
-  // //  std::initializer_list<T>
-  // list(std::initializer_list<value_type> const& items) : list() {
-  //   Node* ptr = &head_;
-  //   // items - initiliser list
-  //   //  we create i as an iterator to work with initiliser list
-  //   for (auto i = items.begin(); i != items.end(); ++i) {
-  //     //  *i  get us value stored in a parrticular element of the initiliser
-  //     //  list
-  //     Node* some = new Node{*i, ptr, &head_};
-  //     head_.prev_ = some;
-  //     ptr->next_ = some;
-  //     ptr = ptr->next_;
-  //   }
-  //   counter_ = items.size();
-  // }
+  template <typename InputIterator>
+  list(InputIterator start, InputIterator end, const Allocator& alloc = Allocator())
+      : al_(alloc), node_c_(std::distance(start, end)), head_(node_al_.allocate(1)) {
+    head_->construct_head(al_);
+    construct_multiple_nodes(head_, start, end);
+  }
 
-  // //  assignment operator overload for moving an object
-  // list& operator=(list&& l) {
-  //   std::swap(head_, l.head_);
-  //   counter_ = l.counter_;
-  //   l.counter_ = 0;
-  //   return *this;
-  // }
+  list(std::initializer_list<T> vals, const Allocator& alloc = Allocator()) 
+      : list(vals.begin(), vals.end(), alloc) { }
 
-  // //  assignment operator overload for copying an object
-  // list& operator=(list& l) {
-  //   list<T> cpy(l);
-  //   swap(cpy);
-  //   return *this;
-  // }
+  list(const list& other) : list(other.begin(), other.end(), other.al_) { }
 
-  // //  destructor
-  // ~list() {
-  //   Node* ptr = end().ptr_->prev_;
-  //   for (size_t i = 0; i < counter_; ++i) {
-  //     Node* tmp = ptr->prev_;
-  //     delete ptr;
-  //     ptr = tmp;
-  //   }
-  // }
+  list(const list& other, const Allocator& alloc) : list(other.begin(), other.end(), alloc) { };
+
+  list(list&& other) : list() {*this = std::move(other); }
+
+  list(list&& other, const Allocator& alloc) : list(alloc) {
+    std::swap(node_c_, other.node_c_);
+    std::swap(head_, other.head_);
+  }
+
+  list& operator=(list& other) {
+    list cpy(other);
+    *this = std::move(other);
+    return *this;
+  }
+
+  list& operator=(list&& other) {
+    std::swap(node_c_, other.node_c_);
+    std::swap(head_, other.head_);
+    node_al_ = std::move(other.node_al_);
+    al_ = std::move(other.al_);
+    return *this;
+  }
+
+  virtual ~list() {
+    destroy_multiple_nodes(head_->next(), head_);
+    if constexpr (std::is_default_constructible<T>::value)
+      al_traits::destroy(al_, &(head_->data));
+    node_al_.deallocate(head_, 1);
+  }
 
   // //  List Element access:---------------------------------------------------
-  // reference front() { return *begin(); }
-  // reference back() { return *(end() - 1); }
+  reference front() { return head_->next()->data; }
+  reference back() { return head_->prev()->data; }
   
-  // const_reference front() const { return *begin(); }
-  // const_reference back() const { return *(end() - 1); }
+  const_reference front() const { return head_->next()->data; }
+  const_reference back() const { return head_->prev()->data; }
 
   
-  // iterator begin() { return iterator(&head_) + 1; }
-  // iterator end() { return iterator(&head_); }
+  iterator begin() { return iterator(head_->next()); }
+  const_iterator begin() const { return cbegin(); }
+  const_iterator cbegin() const { return const_iterator(head_->next()); }
+
+  iterator end() { return iterator(head_); }
+  const_iterator end() const { return cend(); }
+  const_iterator cend() const { return const_iterator(head_); }
 
   bool empty() const noexcept { return !node_c_;}
   size_t max_size() const noexcept { return al_traits::max_size(al_); }
@@ -384,44 +362,83 @@ class list {
   template <typename U, typename Al>
   struct Node {
     using value_type = U;
-    using pointer = Node*;
+    using pointer = U*;
+    using reference = U&;
     using allocator_type = Al;
     using al_traits = std::allocator_traits<allocator_type>;
 
-    pointer construct(pointer prev = nullptr, pointer next = nullptr) {
-      new(this) pointer(prev);
-      new(reinterpret_cast<uint8_t*>(this) + sizeof(pointer)) pointer(next);
+    Node* construct(Node* prev = nullptr, Node* next = nullptr) {
+      new(this) Node*(prev);
+      new(reinterpret_cast<uint8_t*>(this) + sizeof(Node*)) Node*(next);
       return this;
     }
-    pointer construct(U val, allocator_type& al) {
-      uint8_t* ptr = reinterpret_cast<uint8_t*>(this) + 2*sizeof(pointer);
-      al_traits::construct(al, reinterpret_cast<U*>(ptr), val);
+
+    template <typename... Args>
+    Node* construct(allocator_type& al, Args&&... args) {
+      uint8_t* ptr = reinterpret_cast<uint8_t*>(this) + 2*sizeof(Node*);
+      al_traits::construct(al, reinterpret_cast<U*>(ptr), std::forward<Args>(args)...);
       return this;
     }
-    pointer construct(pointer prev, pointer next, U val, allocator_type& al) {
+
+    template <typename... Args>
+    Node* construct(Node* prev, Node* next, allocator_type& al, Args&&... args) {
       construct(prev, next);
-      return construct(val, al);
+      return construct(al, std::forward<Args>(args)...);
     }
   
-    pointer construct_head(allocator_type& al) {
-      this->construct();
+    Node* construct_head(allocator_type& al) {
+      construct(this, this);
       if constexpr (std::is_default_constructible<T>::value)
-        this->construct(T(), al);
+        construct(al);
       return this;
     }
 
-    pointer next() { return next_;}
-    pointer prev() { return prev_;}
+    Node* next() const { return next_node;}
+    Node* prev() const { return prev_node;}
 
-    void bind(pointer lhs, pointer rhs) {
-      lhs->next_ = this;
-      rhs->prev_ = this;
+    U& value() { return data;}
+    const U& value() const { return data;}
+
+    void bind(Node* lhs, Node* rhs) {
+      lhs->next_node = this;
+      rhs->prev_node = this;
     }
 
-    pointer prev_;
-    pointer next_;
-    U data_;
+    Node* prev_node;
+    Node* next_node;
+    U data;
   };
+
+  template <typename... Args>
+  node_ptr construct_multiple_nodes(node_ptr where, dlwhi::size_t count, Args&&... args) {
+    for (size_t i = 0; i < count; ++i, where = where->next()) {
+      node_ptr some = node_al_.allocate(1);
+      some->construct(where, head_, al_, std::forward<Args>(args)...);
+      some->bind(where, head_);
+    }
+    return where;
+  }
+
+  template <typename InputIterator>
+  node_ptr construct_multiple_nodes(node_ptr where, InputIterator start, InputIterator end) {
+    for (; start != end; ++start, where = where->next()) {
+      node_ptr some = node_al_.allocate(1);
+      some->construct(where, head_, al_, *start);
+      some->bind(where, head_);
+    }
+    return where;
+  }
+
+  void destroy_multiple_nodes(node_ptr start, node_ptr end) {
+    node_ptr fwd = start;
+    node_ptr bwd = start->next();
+    while(fwd != end) {
+      al_traits::destroy(al_, &(fwd->data));
+      node_al_.deallocate(fwd, 1);
+      fwd = bwd;
+      bwd = bwd->next();
+    }
+  }
 
   rebind_alloc node_al_;
   allocator_type al_;

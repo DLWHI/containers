@@ -7,7 +7,7 @@ struct IntWrapper {
   int data;
 };
 
-// CopyConstructible and Erasable dummy
+// CopyConstructible, Erasable, DefaultConstructible dummy
 class dummyCpy
 {
   public:
@@ -55,26 +55,20 @@ class dummyMv : public dummyCpy
     const Constructed birth;
 };
 
-// CopyConstructible and Erasable dummy
-class dummyNoDef
+// - DefaultConstructible dummy
+class dummyNoDef : public dummyCpy
 {
   public:
-    explicit dummyNoDef(const std::string& name) : id_(name), leak_(new int()) { };
+    explicit dummyNoDef(const std::string& name) : dummyCpy(name){ };
     dummyNoDef(dummyNoDef&& other) = delete;
-    dummyNoDef(const dummyNoDef& other) : id_(other.id_), leak_(new int()) { };
+    dummyNoDef(const dummyNoDef& other) : dummyCpy(other) { };
     virtual ~dummyNoDef() { delete leak_;}
-
-    bool operator==(const dummyNoDef& other) const { return other.id_ == id_;}
-    bool operator!=(const dummyNoDef& other) const { return other.id_ != id_;}
-
-    friend std::ostream& operator<<(std::ostream& os, const dummyNoDef& obj) {
-      os << obj.id_;
-      return os;
-    }
-  protected:
-    std::string id_;
-    int* leak_;
 };
+
+// class that can be accessed with operator->
+// class dummyPtr {
+//   int data;
+// };
 
 // state allocator
 template <typename T>
@@ -82,6 +76,7 @@ class state_allocator : public std::allocator<T> {
   public:
     typedef std::false_type is_always_equal;
 
+    state_allocator() : std::allocator<T>(), state_("default") {};
     state_allocator(const std::string& state) : std::allocator<T>(), state_(state) {};
 
     bool operator==(const state_allocator& other) {

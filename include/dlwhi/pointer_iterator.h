@@ -17,6 +17,8 @@ class pointer_iterator {
   using value_type = T;
   using pointer = T*;
   using reference = T&;
+  using diff_t = int64_t;
+  using difference_type = diff_t;
 
   constexpr pointer_iterator() noexcept : ptr_(nullptr){};
   constexpr explicit pointer_iterator(T* data) noexcept : ptr_(data){};

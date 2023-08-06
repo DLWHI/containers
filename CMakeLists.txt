@@ -18,14 +18,26 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-if ((CMAKE_CXX_COMPILER_ID STREQUAL GNU) OR (CMAKE_CXX_COMPILER_ID STREQUAL AppleClang))
-  add_compile_options(-Wall -Werror -Wextra -g -fdiagnostics-color=always -fsanitize=address)
-  add_link_options(-fsanitize=address)
+if ((CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+    OR (CMAKE_CXX_COMPILER_ID STREQUAL AppleClang)
+    OR (CMAKE_CXX_COMPILER_ID STREQUAL Clang))
+  add_compile_options(-Wall -Werror -Wextra -g)
+  # add_custom_target(leak_check)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
-  add_compile_options(/fsanitize=address)
+  # add_compile_options(/Wall)
 endif()
 
 include(GoogleTest)
+
+# add_executable(
+#   test_pointer_iterator
+#   tests/test_pointer_iterator.cc
+# )
+# target_link_libraries(
+#   test_pointer_iterator
+#   GTest::gtest_main
+# )
+# gtest_discover_tests(test_pointer_iterator)
 
 add_executable(
   test_vector

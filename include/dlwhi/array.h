@@ -9,7 +9,8 @@
 #include "reverse_iterator.h"
 
 namespace dlwhi {
-typedef int64_t size_t;
+
+using size_t = int64_t;
 
 // Requires T to be Swappable, CopyAssignable
 template <typename T, size_t N>
@@ -19,6 +20,7 @@ struct array {
   using const_pointer = const T*;
   using reference = T&;
   using const_reference = const T&;
+  using size_t = int64_t;
 
   using iterator = dlwhi::pointer_iterator<T, array>;
   using const_iterator = dlwhi::pointer_iterator<const T, array>;

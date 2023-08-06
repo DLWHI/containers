@@ -18,7 +18,7 @@ constexpr int constexpr_check(int val) {
 }
 
 TEST(ArrayTest, init) {
-  dlwhi::array<int, 7> arr;
+  dlwhi::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
 
   EXPECT_EQ(arr.size(), 7);
   EXPECT_EQ(arr.max_size(), 7);
@@ -46,6 +46,8 @@ TEST(ArrayTest, braced_list_init) {
   for (int i = 0; i < arr.size(); i++)
     EXPECT_EQ(arr[i], i + 1);
 }
+
+
 
 TEST(ArrayTest, random_access) {
   dlwhi::array<int, 15> arr{0};
@@ -94,6 +96,8 @@ TEST(ArrayTest, data_access) {
     EXPECT_EQ(ptr[i], i + 1);
 }
 
+
+
 TEST(ArrayTest, comparison_1) {
   dlwhi::array<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
   dlwhi::array<int, 7> arr2{1, 2, 3, 4, 5, 6, 7};
@@ -130,6 +134,8 @@ TEST(ArrayTest, comparison_empty) {
   EXPECT_FALSE(arr1 != arr2);
 }
 
+
+
 TEST(ArrayTest, fill_1) {
   dlwhi::array<int, 7> arr;
 
@@ -156,6 +162,8 @@ TEST(ArrayTest, fill_empty) {
   EXPECT_TRUE(arr.empty());
   EXPECT_EQ(arr.begin(), arr.end());
 }
+
+
 
 TEST(ArrayTest, make_array) {
   auto arr = dlwhi::make_array(1, 2, 3, 4, 5, 6, 7);
@@ -185,6 +193,8 @@ TEST(ArrayTest, make_array_constexpr_2) {
     EXPECT_EQ(arr[i], i + 1);
 }
 #endif
+
+
 TEST(ArrayTest, valid_constexpr_1) {
   constexpr dlwhi::array<int, 7> arr{7, 7, 7, 7, 7, 7, 7};
 
@@ -197,13 +207,17 @@ TEST(ArrayTest, valid_constexpr_2) {
   EXPECT_EQ(cexper, -7);
 }
 
-TEST(ArrayTest, scenartio_stream) {
+
+
+TEST(ArrayTest, stream) {
   dlwhi::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
   std::stringstream stream;
   std::string expected("1 2 3 4 5 6 7");
   stream << arr;
   EXPECT_EQ(expected, stream.str());
 }
+
+
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
