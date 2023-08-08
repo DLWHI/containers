@@ -368,15 +368,14 @@ class list {
     using al_traits = std::allocator_traits<allocator_type>;
 
     Node* construct(Node* prev = nullptr, Node* next = nullptr) {
-      new(this) Node*(prev);
-      new(reinterpret_cast<uint8_t*>(this) + sizeof(Node*)) Node*(next);
+      new(&prev_node) Node*(prev);
+      new(&next_node) Node*(next);
       return this;
     }
 
     template <typename... Args>
     Node* construct(allocator_type& al, Args&&... args) {
-      uint8_t* ptr = reinterpret_cast<uint8_t*>(this) + 2*sizeof(Node*);
-      al_traits::construct(al, reinterpret_cast<U*>(ptr), std::forward<Args>(args)...);
+      al_traits::construct(al, &data, std::forward<Args>(args)...);
       return this;
     }
 
