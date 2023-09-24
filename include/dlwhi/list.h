@@ -18,11 +18,10 @@ using size_t = int64_t;
 
 template <typename T, typename Allocator = std::allocator<T>>
 class list {
-  template <typename U, typename Al>
   struct Node;
 
-  using node_type = Node<T, Allocator>;
-  using node_ptr = Node<T, Allocator>*;
+  using node_type = Node;
+  using node_ptr = Node*;
   using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_type>;
   using rebind_traits = std::allocator_traits<rebind_alloc>;
  public:
@@ -127,14 +126,21 @@ class list {
   size_t max_size() const noexcept { return al_traits::max_size(al_); }
   size_t size() const noexcept { return node_c_; }
 
-  // //  void clear() {}
-  // iterator insert(iterator pos, const_reference value) {
-  //   Node* some = new Node{value, pos.ptr_->prev_, pos.ptr_};
-  //   pos.ptr_->prev_->next_ = some;
-  //   pos.ptr_->prev_ = some;
-  //   counter_ += 1;
-  //   return ListIterator(some);
-  // }
+   void clear() {
+    destroy_multiple_nodes(head_->next(), head_);
+    node_c_ = 0;
+    head_->next_node = head_;
+    head_->prev_node = head_;
+   }
+
+  iterator insert(const_iterator pos, const_reference value) {
+    Node* some = node_al_.allocate(1);
+    Node* target = pos.base();
+    some->construct(target, target->next_node, al_, value);
+    some->bind(target, target->next_node);
+    node_c_ += 1;
+    return iterator(some);
+  }
 
   // //  Deletes an element at pos
   // void erase(iterator pos) {
@@ -258,113 +264,36 @@ class list {
   // //       initial.counter_ = 0;
   // // }
 
-  // //  For testing purposes:
-  // int IsEqual(const list& other) {
-  //   if (counter_ != other.counter_) {
-  //     return 0;
-  //   } 
-  //   if (counter_ == 0) {
-  //     return 1;
-  //   }
-  //   iterator first = begin();
-  //   iterator second = other.head_.next_;
-  //   while (first != end()) {
-  //     if (*first != *second) {
-  //       return 0;
-  //     } 
-  //     ++first;
-  //     ++second;
-  //   }
-  //   return 1;
-  // }
+  bool operator==(const list& other) const {
+    if (node_c_ != other.node_c_) {
+      return false;
+    } 
+    const_iterator second = other.begin();
+    for (auto first = begin(); first != end(); ++first) {
+      if (*first != *second)
+        return false;
+    }
+    return true;
+  }
 
-  // friend std::ostream& operator<<(std::ostream& os, list some) {
-  //   Node* ptr = some.head_.next_;
-  //   for (size_t i = 0; i < some.counter_; ++i) {
-  //     std::cout << std::endl << ptr->data_ << std::endl;
-  //     ptr = ptr->next_;
-  //   }
-  //   std::cout << std::endl;
-  //   return os;
-  // }
+  bool operator!=(const list& other) const {
+    return !(*this == other);
+  }
 
-  // template <typename TI>
-  // class ListIterator {
-  //   /* A friend class can access private and protected members
-  //   of other classes in which it is declared as a friend */
-
-  //   friend list;
-
-  //  public:
-  //   //  Default constructor:
-  //   ListIterator() : ptr_(nullptr) {}
-  //   //  Parametarised constructor:
-  //   ListIterator(TI* data) noexcept : ptr_(data){};
-  //   // Copy constructor:
-  //   ListIterator(const ListIterator& other) : ptr_(other.ptr_) {}
-
-  //   // Assignment operator overload for copying an object
-  //   ListIterator& operator=(
-  //       const ListIterator& other) noexcept {  //  why noexept?
-  //     ptr_ = other.ptr_;
-  //     return *this;
-  //   }
-  //   ListIterator& operator=(iterator&& other) noexcept {
-  //     ptr_ = other.ptr_;
-  //     return *this;
-  //   }
-  //   //  Destructor
-  //   ~ListIterator() = default;
-
-  //   //  Operators overload:
-  //   ListIterator& operator++() noexcept {
-  //     ptr_ = ptr_->next_;
-  //     return *this;
-  //   }
-  //   ListIterator& operator--() noexcept {
-  //     ptr_ = ptr_->prev_;
-  //     return *this;
-  //   }
-
-  //   bool operator==(const iterator other) { return ptr_ == other.ptr_; }
-
-  //   bool operator!=(const iterator other) { return ptr_ != other.ptr_; }
-
-  //   //  - int overload used in insert:
-  //   ListIterator operator-(int k) {
-  //     ListIterator tmp(ptr_);  //  parametarised constructor
-  //     for (int i = 0; i < k; ++i) {
-  //       tmp.ptr_ = tmp.ptr_->prev_;
-  //     }
-  //     return tmp;
-  //   }
-
-  //   ListIterator operator+(int k) {
-  //     ListIterator tmp(ptr_);  //  parametarised constructor
-  //     for (int i = 0; i < k; ++i) {
-  //       tmp.ptr_ = tmp.ptr_->next_;
-  //     }
-  //     return tmp;
-  //   }
-
-  //   //  implicit conversion
-  //   operator ListIterator<const TI>() const {
-  //     return ListIterator<const TI>(ptr_);
-  //   }
-
-  //   TI& operator*() { return ptr_->data_; }
-
-  //  private:
-  //   TI* ptr_;
-  // };
-
+  friend std::ostream& operator<<(std::ostream& os, const list& some) {
+    const Node* ptr = some.head_->next_node;
+    for (; ptr->next_node != some.head_; ptr = ptr->next_node) {
+      os << ptr->data << ' ';
+    }
+    os << ptr->data;
+    return os;
+  }
  private:
-  template <typename U, typename Al>
   struct Node {
-    using value_type = U;
-    using pointer = U*;
-    using reference = U&;
-    using allocator_type = Al;
+    using value_type = T;
+    using pointer = T*;
+    using reference = T&;
+    using allocator_type = Allocator;
     using al_traits = std::allocator_traits<allocator_type>;
 
     Node* construct(Node* prev = nullptr, Node* next = nullptr) {
@@ -395,17 +324,21 @@ class list {
     Node* next() const { return next_node;}
     Node* prev() const { return prev_node;}
 
-    U& value() { return data;}
-    const U& value() const { return data;}
+    T& value() { return data;}
+    const T& value() const { return data;}
 
     void bind(Node* lhs, Node* rhs) {
       lhs->next_node = this;
       rhs->prev_node = this;
     }
 
+    // operator pointer_iterator<const T>() const noexcept {
+    //   return pointer_iterator<const T>(const_cast<const T*>(ptr_));
+    // }
+
     Node* prev_node;
     Node* next_node;
-    U data;
+    T* data;
   };
 
   template <typename... Args>

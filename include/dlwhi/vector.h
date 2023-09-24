@@ -194,7 +194,7 @@ class vector {
   }
 
   constexpr vector& pop_back() {
-    size_--;
+    --size_;
     al_traits::destroy(al_, ptr_ + size_);
     return *this;
   }
@@ -211,7 +211,7 @@ class vector {
     pointer dest = ptr_ + (pos - begin());
     al_traits::destroy(al_, dest);
     move_chunk_left(dest + 1, end().base(), dest);
-    size_--;
+    --size_;
     return iterator(dest);
   }
 
@@ -250,7 +250,7 @@ class vector {
 
   constexpr bool operator==(const vector& other) const {
     if (size_ != other.size_) return false;
-    for (size_t i = 0; i < size_; i++)
+    for (size_t i = 0; i < size_; ++i)
       if (ptr_[i] != other.ptr_[i]) return false;
     return true;
   }
@@ -260,7 +260,7 @@ class vector {
   }
 
   friend std::ostream& operator<<(std::ostream& os, const vector& vec) {
-    for (size_t i = 0; i < vec.size_ - 1; i++) os << vec.ptr_[i] << ' ';
+    for (size_t i = 0; i < vec.size_ - 1; ++i) os << vec.ptr_[i] << ' ';
     os << vec.ptr_[vec.size_ - 1];
     return os;
   }
@@ -268,7 +268,7 @@ class vector {
  private:
   template <typename InputIterator>
   constexpr void construct_multiple(pointer where, InputIterator left, InputIterator right) {
-    for (; left != right; left++, where++) 
+    for (; left != right; ++left, ++where) 
       al_traits::construct(al_, where, *left);
   }
 
@@ -400,7 +400,7 @@ vector<T, Allocator>::place_at(const_iterator pos,
     move_chunk_right(ptr_ + delta, ptr_ + size_, ptr_ + delta + 1);
     al_traits::construct(al_, ptr_ + delta, std::forward<Args>(value)...);
   }
-  size_++;
+  ++size_;
   return iterator(ptr_ + delta);
 }
 }  // namespace dlwhi

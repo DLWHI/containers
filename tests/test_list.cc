@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <sstream>
-#include <vector>
 #include <list>
 #include <random>
 
@@ -157,55 +156,137 @@ TEST(ListTest, ctor_ass_move) {
   EXPECT_EQ(lst2.back(), dummyCpy("not default"));
 }
 
+TEST(ListTest, comparison_1) {
+  dlwhi::size_t size = uid(gen);
+  dlwhi::list<dummyCpy> lst1(size, dummyCpy("equal"));
+  dlwhi::list<dummyCpy> lst2(size, dummyCpy("equal"));
+
+  EXPECT_TRUE(lst1 == lst2);
+  EXPECT_FALSE(lst1 != lst2);
+  EXPECT_TRUE(lst2 == lst1);
+  EXPECT_FALSE(lst2 != lst1);
+}
+
+TEST(ListTest, comparison_2) {
+  dlwhi::list<dummyCpy> lst1(uid(gen), dummyCpy("not equal"));
+  dlwhi::list<dummyCpy> lst2(uid(gen), dummyCpy("equal"));
+
+  EXPECT_FALSE(lst1 == lst2);
+  EXPECT_TRUE(lst1 != lst2);
+  EXPECT_FALSE(lst2 == lst1);
+  EXPECT_TRUE(lst2 != lst1);
+}
+
+TEST(ListTest, comparison_3) {
+  dlwhi::list<dummyCpy> lst1(uid(gen), dummyCpy("not equal"));
+  dlwhi::list<dummyCpy> lst2;
+
+  EXPECT_FALSE(lst1 == lst2);
+  EXPECT_TRUE(lst1 != lst2);
+  EXPECT_FALSE(lst2 == lst1);
+  EXPECT_TRUE(lst2 != lst1);
+}
+
+TEST(ListTest, comparison_self) {
+  dlwhi::list<dummyCpy> lst(uid(gen), dummyCpy("not equal"));
+
+  EXPECT_TRUE(lst == lst);
+  EXPECT_FALSE(lst != lst);
+}
+
+TEST(ListTest, comparison_empty) {
+  dlwhi::list<dummyCpy> lst1;
+  dlwhi::list<dummyCpy> lst2;
+
+  EXPECT_TRUE(lst1 == lst2);
+  EXPECT_FALSE(lst1 != lst2);
+}
+
+TEST(ListTest, clear) {
+  for (int i = 0; i < loop; i++) {
+    dlwhi::list<dummyCpy> lst(uid(gen), dummyCpy("dirty"));
+
+    lst.clear();
+    EXPECT_EQ(lst.size(), 0);
+  }
+}
 
 
+TEST(ListTest, insert_not_movable) {
+  dummyCpy insert_val("inserted");
+  for (int i = 0; i < loop; i++) {
+    dlwhi::list<dummyCpy> lst(uid(gen), dummyCpy("default"));
+    std::uniform_int_distribution<dlwhi::size_t> uid_lst(0, lst.size());
+    dlwhi::size_t pos = uid_lst(gen);
+    auto insert_pos = lst.begin();
+    for (dlwhi::size_t i = 0; i < pos; ++i, ++insert_pos) {};
+    insert_pos = lst.insert(insert_pos, insert_val);
+    EXPECT_EQ(*insert_pos, insert_val);
+  }
+}
 
-// TEST(ListTest, comparison_1) {
-//   dlwhi::size_t size = uid(gen);
-//   dlwhi::list<dummyCpy> lst1(size, dummyCpy("equal"));
-//   dlwhi::list<dummyCpy> lst2(size, dummyCpy("equal"));
+TEST(ListTest, insert_empty_not_movable) {
+  dummyMv insert_val("inserted");
+  dlwhi::list<dummyCpy> lst;
+  auto insert_pos = lst.insert(lst.begin(), insert_val);
+  EXPECT_EQ(insert_pos, lst.begin());
+}
 
-//   EXPECT_TRUE(lst1 == lst2);
-//   EXPECT_FALSE(lst1 != lst2);
-//   EXPECT_TRUE(lst2 == lst1);
-//   EXPECT_FALSE(lst2 != lst1);
+TEST(ListTest, insert_begin_not_movable) {
+  dummyCpy target("inserted");
+  dlwhi::list<dummyCpy> lst(uid(gen), dummyCpy("default"));
+  auto insert_pos = lst.insert(lst.begin(), target);
+  EXPECT_EQ(*insert_pos, target);
+  EXPECT_EQ(*lst.begin(), target);
+  EXPECT_EQ(lst.begin(), insert_pos);
+}
+
+// TEST(ListTest, insert_movable_1) {
+//   int insert_count = std::min(static_cast<int>(uid(gen)), loop);
+//   dlwhi::list<dummyMv> lst(uid(gen), dummyMv("default"));
+//   std::uniform_int_distribution<dlwhi::size_t> uid_lst(0, lst.size());
+//   for (int i = 0; i < insert_count; i++) {
+//     auto insert_pos = lst.begin() + uid_lst(gen);
+//     insert_pos = lst.insert(insert_pos, dummyMv("inserted"));
+//     EXPECT_EQ(*insert_pos, dummyMv("inserted"));
+//   }
 // }
 
-// TEST(ListTest, comparison_2) {
-//   dlwhi::list<dummyCpy> lst1(uid(gen), dummyCpy("not equal"));
-//   dlwhi::list<dummyCpy> lst2(uid(gen), dummyCpy("equal"));
-
-//   EXPECT_FALSE(lst1 == lst2);
-//   EXPECT_TRUE(lst1 != lst2);
-//   EXPECT_FALSE(lst2 == lst1);
-//   EXPECT_TRUE(lst2 != lst1);
+// TEST(ListTest, insert_movable_2) {
+//   for (int i = 0; i < loop; i++) {
+//     dlwhi::list<dummyMv> lst(uid(gen), dummyMv("default"));
+//     std::uniform_int_distribution<dlwhi::size_t> uid_lst(0, lst.size());
+//     auto insert_pos = lst.begin() + uid_lst(gen);
+//     insert_pos = lst.insert(insert_pos, dummyMv("inserted"));
+//     EXPECT_EQ(*insert_pos, dummyMv("inserted"));
+//   }
 // }
 
-// TEST(ListTest, comparison_3) {
-//   dlwhi::list<dummyCpy> lst1(uid(gen), dummyCpy("not equal"));
-//   dlwhi::list<dummyCpy> lst2;
-
-//   EXPECT_FALSE(lst1 == lst2);
-//   EXPECT_TRUE(lst1 != lst2);
-//   EXPECT_FALSE(lst2 == lst1);
-//   EXPECT_TRUE(lst2 != lst1);
+// TEST(ListTest, insert_empty_movable) {
+//   dlwhi::list<dummyMv> lst;
+//   auto insert_pos = lst.insert(lst.begin(), dummyMv("inserted"));
+//   EXPECT_EQ(insert_pos, lst.begin());
 // }
 
-// TEST(ListTest, comparison_self) {
-//   dlwhi::list<dummyCpy> lst(uid(gen), dummyCpy("not equal"));
-
-//   EXPECT_TRUE(lst == lst);
-//   EXPECT_FALSE(lst != lst);
+// TEST(ListTest, insert_begin_movable) {
+//   dlwhi::list<dummyMv> lst(uid(gen), dummyMv("default"));
+//   auto insert_pos = lst.insert(lst.begin(), dummyMv("inserted"));
+//   EXPECT_EQ(*insert_pos, dummyMv("inserted"));
+//   EXPECT_EQ(*lst.begin(), dummyMv("inserted"));
+//   EXPECT_EQ(lst.begin(), insert_pos);
+//   EXPECT_EQ(lst.back().birth, dummyMv::Constructed::kMove);
 // }
 
-// TEST(ListTest, comparison_empty) {
-//   dlwhi::list<dummyCpy> lst1;
-//   dlwhi::list<dummyCpy> lst2;
-
-//   EXPECT_TRUE(lst1 == lst2);
-//   EXPECT_FALSE(lst1 != lst2);
-// }
-
+TEST(ListTest, stream) {
+  dlwhi::list<dummyMv> lst{
+      dummyMv("Aileen"), dummyMv("Anna"),  dummyMv("Louie"),
+      dummyMv("Noel"),   dummyMv("Grace"),
+  };
+  std::stringstream stream;
+  std::string expected("Aileen Anna Louie Noel Grace");
+  stream << lst;
+  EXPECT_EQ(expected, stream.str());
+}
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

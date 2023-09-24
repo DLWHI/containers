@@ -74,7 +74,7 @@ struct array {
   }
 
   constexpr array& fill(const_reference value) {
-    for (size_t i = 0; i < N; i++) {
+    for (size_t i = 0; i < N; ++i) {
       arr[i] = value;
     }
     return *this;
@@ -89,13 +89,13 @@ struct array {
   constexpr const_reference operator[](size_t i) const { return arr[i]; }
   constexpr bool operator==(const array& other) const {
     if (N != other.size()) return false;
-    for (size_t i = 0; i < N; i++)
+    for (size_t i = 0; i < N; ++i)
       if (arr[i] != other.arr[i]) return false;
     return true;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const array& array) {
-    for (size_t i = 0; i < N - 1; i++) os << array.arr[i] << ' ';
+    for (size_t i = 0; i < N - 1; ++i) os << array.arr[i] << ' ';
     os << array.arr[N - 1];
     return os;
   }
