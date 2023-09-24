@@ -96,7 +96,7 @@ class node_iterator {
   }
 
   constexpr operator node_iterator<const T, Container>() const noexcept {
-    return node_iterator<const T, Container>(const_cast<const T*>(node_));
+    return node_iterator<const T, Container>(node_);
   }
 
  protected:

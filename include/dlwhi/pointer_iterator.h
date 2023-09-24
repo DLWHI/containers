@@ -93,7 +93,7 @@ class pointer_iterator {
   }
 
   constexpr operator pointer_iterator<const T, Container>() const noexcept {
-    return pointer_iterator<const T, Container>(const_cast<const T*>(ptr_));
+    return pointer_iterator<const T, Container>(ptr_);
   }
 
  protected:

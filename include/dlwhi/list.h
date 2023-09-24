@@ -135,9 +135,18 @@ class list {
 
   iterator insert(const_iterator pos, const_reference value) {
     Node* some = node_al_.allocate(1);
-    Node* target = pos.base();
-    some->construct(target, target->next_node, al_, value);
-    some->bind(target, target->next_node);
+    Node* target = const_cast<Node*>(pos.base());
+    some->construct(target->prev_node, target, al_, value);
+    some->bind(target->prev_node, target);
+    node_c_ += 1;
+    return iterator(some);
+  }
+
+  iterator insert(const_iterator pos, move_reference value) {
+    Node* some = node_al_.allocate(1);
+    Node* target = const_cast<Node*>(pos.base());
+    some->construct(target->prev_node, target, al_, std::forward<value_type>(value));
+    some->bind(target->prev_node, target);
     node_c_ += 1;
     return iterator(some);
   }
@@ -338,7 +347,7 @@ class list {
 
     Node* prev_node;
     Node* next_node;
-    T* data;
+    T data;
   };
 
   template <typename... Args>
