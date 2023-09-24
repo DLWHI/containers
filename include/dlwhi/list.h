@@ -151,6 +151,13 @@ class list {
     return iterator(some);
   }
 
+  iterator insert(const_iterator pos, size_t count, const_reference value );
+
+  template<typename InputIterator>
+  iterator insert(const_iterator start, InputIterator end, InputIterator last);
+
+  iterator insert(const_iterator pos, std::initializer_list<T> vals);
+
   // //  Deletes an element at pos
   // void erase(iterator pos) {
   //   Node* nextNode = (pos + 1).ptr_;
