@@ -2,7 +2,7 @@
 #define DLWHI_CONTAINERS_REVERSE_ITERATOR_H_
 #include <cstdint>
 
-namespace dlwhi {
+namespace sp {
 
 using diff_t = int64_t;
 
@@ -17,6 +17,10 @@ class reverse_iterator {
 
   constexpr reverse_iterator() = default;
   constexpr explicit reverse_iterator(BidIt it) noexcept : fwd_it_(it){};
+  constexpr reverse_iterator(const reverse_iterator&) = default;
+  constexpr reverse_iterator(reverse_iterator&&) = default;
+  constexpr reverse_iterator& operator=(const reverse_iterator&) = default;
+  constexpr reverse_iterator& operator=(reverse_iterator&&) = default;
   constexpr virtual ~reverse_iterator() = default;
 
   constexpr pointer* base() const noexcept { return fwd_it_.base(); }

@@ -1,35 +1,29 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.0...3.5)
 project(containers)
 
 set(CMAKE_CXX_STANDARD 20)
 
 include_directories(include)
 
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-if (WIN32)
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-endif (WIN32)
-FetchContent_MakeAvailable(googletest)
+add_compile_definitions(_DISABLE_VECTOR_ANNOTATION _DISABLE_STRING_ANNOTATION)
 
-enable_testing()
+include(EnableGoogleTest)
 
-if ((CMAKE_CXX_COMPILER_ID STREQUAL GNU)
-    OR (CMAKE_CXX_COMPILER_ID STREQUAL Clang))
-  add_compile_options(-Wall -Werror -Wextra -g)
-  # add_custom_target(leak_check)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL MSVC)
-  # add_compile_options(/Wall)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL AppleClang)
-  add_compile_options(-Wall -Werror -Wextra -g -fsanitize=address)
-  add_link_options(-fsanitize=address)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+# valgrind  --tool=memcheck --track-fds=yes --trace-children=yes --track-origins=yes --leak-check=full --show-leak-kinds=all -s --log-file=leak_report.txt ./test_vector
+  add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic)
+  # add_link_options(-fsanitize=address)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
+  add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -O3)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  add_compile_options(/W4 /EHsc /fsanitize=address)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+  add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -O3)
+  # add_link_options(-fsanitize=address)
 endif()
 
-include(GoogleTest)
 
 add_executable(
   test_vector

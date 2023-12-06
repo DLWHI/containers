@@ -3,7 +3,7 @@
 #include <iterator>
 #include <cstdint>
 
-namespace dlwhi {
+namespace sp {
 
 using diff_t = int64_t;
 
@@ -22,9 +22,13 @@ class pointer_iterator {
 
   constexpr pointer_iterator() noexcept : ptr_(nullptr){};
   constexpr explicit pointer_iterator(T* data) noexcept : ptr_(data){};
+  constexpr pointer_iterator(const pointer_iterator&) = default;
+  constexpr pointer_iterator(pointer_iterator&&) = default;
+  constexpr pointer_iterator& operator=(const pointer_iterator&) = default;
+  constexpr pointer_iterator& operator=(pointer_iterator&&) = default;
   constexpr virtual ~pointer_iterator() = default;
 
-  constexpr T* base() const noexcept { return ptr_; }
+  constexpr T* data() const noexcept { return ptr_; }
 
   constexpr T& operator*() const noexcept { return *ptr_; }
   constexpr T* operator->() const noexcept { return ptr_; }

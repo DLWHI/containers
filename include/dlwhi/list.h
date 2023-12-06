@@ -12,7 +12,7 @@
 #include "node_iterator.h"
 #include "reverse_iterator.h"
 
-namespace dlwhi {
+namespace sp {
 
 using size_t = int64_t;
 
@@ -39,10 +39,10 @@ class list {
   using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
 
-  using iterator = dlwhi::node_iterator<node_type, list>;
-  using const_iterator = dlwhi::node_iterator<const node_type, list>;
-  using reverse_iterator = dlwhi::reverse_iterator<iterator>;
-  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
+  using iterator = sp::node_iterator<node_type, list>;
+  using const_iterator = sp::node_iterator<const node_type, list>;
+  using reverse_iterator = sp::reverse_iterator<iterator>;
+  using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
 
   list() : al_(Allocator()), node_c_(0), head_(node_al_.allocate(1)){
     head_->construct_head(al_);
@@ -358,7 +358,7 @@ class list {
   };
 
   template <typename... Args>
-  node_ptr construct_multiple_nodes(node_ptr where, dlwhi::size_t count, Args&&... args) {
+  node_ptr construct_multiple_nodes(node_ptr where, sp::size_t count, Args&&... args) {
     for (size_t i = 0; i < count; ++i, where = where->next()) {
       node_ptr some = node_al_.allocate(1);
       some->construct(where, head_, al_, std::forward<Args>(args)...);

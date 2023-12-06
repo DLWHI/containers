@@ -8,7 +8,7 @@
 #include "pointer_iterator.h"
 #include "reverse_iterator.h"
 
-namespace dlwhi {
+namespace sp {
 
 using size_t = int64_t;
 
@@ -22,10 +22,10 @@ struct array {
   using const_reference = const T&;
   using size_t = int64_t;
 
-  using iterator = dlwhi::pointer_iterator<T, array>;
-  using const_iterator = dlwhi::pointer_iterator<const T, array>;
-  using reverse_iterator = dlwhi::reverse_iterator<iterator>;
-  using const_reverse_iterator = dlwhi::reverse_iterator<const_iterator>;
+  using iterator = sp::pointer_iterator<T, array>;
+  using const_iterator = sp::pointer_iterator<const T, array>;
+  using reverse_iterator = sp::reverse_iterator<iterator>;
+  using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
 
   constexpr reference at(size_t pos) {
     return (0 <= pos && pos < N) ? arr[pos] : throw std::out_of_range("Accessing element out of bounds");
@@ -73,22 +73,19 @@ struct array {
     return const_reverse_iterator(arr - 1);
   }
 
-  constexpr array& fill(const_reference value) {
+  constexpr void fill(const_reference value) noexcept(std::is_nothrow_copy_assignable<T>::value) {
     for (size_t i = 0; i < N; ++i) {
       arr[i] = value;
     }
-    return *this;
   }
 
-  constexpr array& swap(array& other) noexcept(std::is_nothrow_swappable_v<T>) {
+  constexpr void swap(array& other) noexcept(std::is_nothrow_swappable<T>::value) {
     std::swap_ranges(arr, arr + size(), other.arr);
-    return *this;
   }
 
   constexpr reference operator[](size_t i) { return arr[i]; }
   constexpr const_reference operator[](size_t i) const { return arr[i]; }
   constexpr bool operator==(const array& other) const {
-    if (N != other.size()) return false;
     for (size_t i = 0; i < N; ++i)
       if (arr[i] != other.arr[i]) return false;
     return true;
@@ -111,5 +108,82 @@ make_array(Vals&&... values) {
                  sizeof...(Vals)>
                  {std::forward<Vals>(values)...};
 }
+
+template <typename T>
+struct array<T, 0> {
+  using value_type = T;
+  using pointer = T*;
+  using const_pointer = const T*;
+  using reference = T&;
+  using const_reference = const T&;
+  using size_t = int64_t;
+
+  using iterator = sp::pointer_iterator<T, array>;
+  using const_iterator = sp::pointer_iterator<const T, array>;
+  using reverse_iterator = sp::reverse_iterator<iterator>;
+  using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
+
+  constexpr const_reference at(size_t pos) const {
+    (void) pos;
+    throw std::out_of_range("Accessing element out of bounds");
+  }
+
+  constexpr const_reference front() const { return *begin(); }
+  constexpr const_reference back() const { return *begin(); }
+  constexpr const_pointer data() const noexcept { return nullptr; }
+
+  constexpr bool empty() const noexcept { return true; }
+  constexpr size_t size() const noexcept { return 0; }
+  constexpr size_t max_size() const noexcept { return 0; }
+
+  constexpr iterator begin() noexcept { return iterator(nullptr); }
+  constexpr const_iterator begin() const noexcept { return cbegin(); }
+  constexpr const_iterator cbegin() const noexcept {
+    return const_iterator(nullptr);
+  }
+  constexpr iterator end() noexcept { return iterator(nullptr); }
+  constexpr const_iterator end() const noexcept { return cend(); }
+  constexpr const_iterator cend() const noexcept {
+    return const_iterator(nullptr);
+  }
+
+  constexpr reverse_iterator rbegin() noexcept {
+    return reverse_iterator(nullptr);
+  }
+  constexpr const_reverse_iterator rbegin() const noexcept { return crbegin(); }
+  constexpr const_reverse_iterator crbegin() const noexcept {
+    return const_reverse_iterator(nullptr);
+  }
+  constexpr reverse_iterator rend() noexcept {
+    return reverse_iterator(nullptr);
+  }
+  constexpr const_reverse_iterator rend() const noexcept { return crend(); }
+  constexpr const_reverse_iterator crend() const noexcept {
+    return const_reverse_iterator(nullptr);
+  }
+
+  constexpr void fill(const_reference value) {
+    *begin();
+    (void) value;
+  }
+
+  constexpr void swap(array& other) noexcept {
+    (void) other;
+  }
+
+  constexpr reference operator[](size_t i) { (void)i; return *begin(); }
+  constexpr const_reference operator[](size_t i) const { (void)i; return *begin(); }
+  constexpr bool operator==(const array& other) const {
+    (void) other;
+    return true;
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const array& array) noexcept {
+    (void) array;
+    return os;
+  }
+};
+
+
 }  // namespace s21
 #endif  // DLWHI_CONTAINERS_ARRAY_H_

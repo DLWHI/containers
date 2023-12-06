@@ -3,7 +3,7 @@
 #include <iterator>
 #include <cstdint>
 
-namespace dlwhi {
+namespace sp {
 
 using diff_t = int64_t;
 
