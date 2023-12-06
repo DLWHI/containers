@@ -163,7 +163,6 @@ struct array<T, 0> {
   }
 
   constexpr void fill(const_reference value) {
-    *begin();
     (void) value;
   }
 

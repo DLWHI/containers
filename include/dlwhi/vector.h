@@ -117,30 +117,57 @@ class vector {
   // T must meet additional requirements of
   //  CopyInsertable and CopyAssignable into *this
   constexpr vector& operator=(const vector& other) {
-    if constexpr (al_traits::propagate_on_container_copy_assignment::value ||
-                  !al_traits::is_always_equal::value) {
+    if constexpr (al_traits::propagate_on_container_copy_assignment::value) {
+      pointer_buffer temp(&al_);
+      buf_.swap(temp);
+      destroy_content(temp.ptr, size_);
+      size_ = 0;
       al_ = other.al_;
     }
-    assign(other.begin(), other.end());
+    if (other.size_ > buf_.cap || !std::is_nothrow_copy_assignable<T>::value) {
+      pointer_buffer temp(other.buf_.cap, &al_);
+      fill(temp.ptr, other.buf_.ptr, other.buf_.ptr + other.size_);
+      buf_.swap(temp);
+      destroy_content(temp.ptr, size_);
+    } else if constexpr (std::is_nothrow_copy_assignable<T>::value) {
+      if (size_ < other.size_) {
+        fill(buf_.ptr + size_, other.buf_.ptr + size_,
+             other.buf_.ptr + other.size_);
+      } else {
+        destroy_content(buf_.ptr + other.size_, size_ - other.size_);
+      }
+      for (size_t i = 0; i < other.size_ && i < size_; ++i) {
+        buf_.ptr[i] = other.buf_.ptr[i];
+      }
+    }
+    size_ = other.size_;
     return *this;
   }
 
   // T must meet additional requirements of
   //  MoveInsertable into *this and MoveAssignable if
   //  allocator_traits<Allocator>
-  //  ::propagate_on_container_move_assignment::value is false 
-  constexpr vector& operator=(vector&& other) noexcept {
-    if constexpr (al_traits::propagate_on_container_move_assignment::value ||
-                  al_traits::is_always_equal::value) {
+  //  ::propagate_on_container_move_assignment::value is false
+  constexpr vector& operator=(vector&& other) noexcept(
+      al_traits::propagate_on_container_move_assignment::value ||
+      al_traits::is_always_equal::value) {
+    if (al_traits::propagate_on_container_move_assignment::value) {
       al_ = std::move(other.al_);
-      buf_.swap(other.buf_);
-      std::swap(size_, other.size_);
-    } else {
-      pointer_buffer temp(other.size_, &al_);
+    }
+    if (other.size_ > buf_.cap || !std::is_nothrow_move_assignable<T>::value) {
+      pointer_buffer temp(other.buf_.cap, &al_);
       move_from(temp.ptr, other.buf_.ptr, other.size_);
       buf_.swap(temp);
-      size_ = other.size_;
+      destroy_content(temp.ptr, size_);
+    } else if constexpr (std::is_nothrow_move_assignable<T>::value) {
+      move_from(buf_.ptr + size_, other.buf_.ptr + other.size_,
+                other.size_ - size_);
+      destroy_content(buf_.ptr + other.size_, size_ - other.size_);
+      for (size_t i = 0; i < other.size_ && i < size_; ++i) {
+        buf_.ptr[i] = std::move(other.buf_.ptr[i]);
+      }
     }
+    size_ = other.size_;
     return *this;
   }
 
@@ -219,7 +246,7 @@ class vector {
   //============================================================================
 
   // T must meet additional requirement of CopyAssignable and
-  //  CopyInsertable into *this 
+  //  CopyInsertable into *this
   constexpr void assign(size_t count, const_reference value) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid count provided");
@@ -238,7 +265,7 @@ class vector {
     }
   }
 
-  // T must meet additional requirement of EmplaceConstructible into *this 
+  // T must meet additional requirement of EmplaceConstructible into *this
   //  and assignable from InputIterator (I guess CopyAssignable would be okay)
   //  and MoveInsertable if InputIterator does not satisfy ForwardIterator
   template <typename InputIterator>
@@ -342,7 +369,7 @@ class vector {
     }
   }
   //==============================================================================
-  
+
   // T must meet additional requirements of CopyInsertable
   constexpr void push_back(const_reference value) { emplace_back(value); }
 
@@ -371,7 +398,8 @@ class vector {
 
   // T must meet additional requirements of CopyAssignable
   //   and CopyInsertable into *this
-  constexpr iterator insert(const_iterator pos, size_t count, const_reference value) {
+  constexpr iterator insert(const_iterator pos, size_t count,
+                            const_reference value) {
     size_t ind = pos - begin();
     if (size_ + count >= buf_.cap || !std::is_nothrow_swappable<T>::value) {
       pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_);
@@ -468,7 +496,7 @@ class vector {
   }
 
   // T must meet additional requirements of EmplaceConstrutible from args,
-  //  MoveAssignable and MoveInsertable into *this 
+  //  MoveAssignable and MoveInsertable into *this
   template <typename... Args>
   constexpr iterator emplace(const_iterator pos, Args&&... args) {
     size_t ind = pos - begin();
@@ -497,7 +525,7 @@ class vector {
   }
 
   // T must meet additional requirements of EmplaceConstrutible from args
-  //   and MoveInsertable into *this 
+  //   and MoveInsertable into *this
   template <typename... Args>
   constexpr T& emplace_back(Args&&... args) {
     if (size_ >= buf_.cap) {

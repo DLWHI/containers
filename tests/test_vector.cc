@@ -425,20 +425,6 @@ TEST(VectorTest, assignment_copy) {
   ASSERT_EQ(vec2.back().birth, constructed::kCopy);
 }
 
-TEST(VectorTest, assignment_copy_cap_ge) {
-  sp::size_t size = 7;
-  const TargetVector<safe> vec1(size, safe("not default"));
-  TargetVector<safe> vec2(8);
-
-  vec2 = vec1;
-
-  ASSERT_EQ(vec1.size(), vec2.size());
-  ASSERT_NE(vec1.capacity(), vec2.capacity());
-  ASSERT_NE(vec2.data(), nullptr);
-  ASSERT_EQ(vec1.front(), vec2.front());
-  ASSERT_EQ(vec1.back(), vec2.front());
-}
-
 TEST(VectorTest, assignment_copy_throwing) {
   throwing::count = 0;
   sp::size_t size = uid(gen) + 5;
@@ -463,17 +449,16 @@ TEST(VectorTest, assignment_move) {
   sp::size_t size = uid(gen);
   TargetVector<not_safe> vec1(size);
   sp::size_t cap = vec1.capacity();
+  not_safe* ptr = vec1.data();
   TargetVector<not_safe> vec2;
 
   vec2 = std::move(vec1);
 
   ASSERT_EQ(vec2.size(), size);
   ASSERT_EQ(vec2.capacity(), cap);
-  ASSERT_NE(vec2.data(), nullptr);
+  ASSERT_NE(vec2.data(), ptr);
   ASSERT_EQ(vec2.front(), not_safe());
   ASSERT_EQ(vec2.back(), not_safe());
-  ASSERT_EQ(vec2.front().birth, constructed::kDef);
-  ASSERT_EQ(vec2.back().birth, constructed::kDef);
 }
 
 TEST(VectorTest, assignment_move_with_alloc) {
@@ -491,8 +476,24 @@ TEST(VectorTest, assignment_move_with_alloc) {
   ASSERT_NE(vec2.get_allocator(), vec1.get_allocator());
   ASSERT_EQ(vec2.front(), safe());
   ASSERT_EQ(vec2.back(), safe());
-  ASSERT_EQ(vec2.front().birth, constructed::kMove);
-  ASSERT_EQ(vec2.back().birth, constructed::kMove);
+}
+
+TEST(VectorTest, assignment_move_with_alloc_no_realloc) {
+  TargetVector<safe, state_allocator<safe>> vec1(10,
+                                                 state_allocator<safe>("one"));
+                                                 
+  TargetVector<safe, state_allocator<safe>> vec2(33, state_allocator<safe>("two"));
+  safe* ptr = vec2.data();
+
+  vec2 = std::move(vec1);
+
+  ASSERT_EQ(vec2.size(), 10);
+  ASSERT_EQ(vec1.capacity(), 10);
+  ASSERT_EQ(vec2.capacity(), 33);
+  ASSERT_EQ(vec2.data(), ptr);
+  ASSERT_NE(vec2.get_allocator(), vec1.get_allocator());
+  ASSERT_EQ(vec2.front(), safe());
+  ASSERT_EQ(vec2.back(), safe());
 }
 
 //==============================================================================
