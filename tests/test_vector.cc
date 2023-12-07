@@ -275,7 +275,7 @@ TEST(VectorTest, ctor_copy_throwing_alloc_not_default) {
       size, state_allocator<throwing>("default"));
   try {
     TargetVector<throwing, state_allocator<throwing>> vec2(vec1, not_default);
-    ASSERT_ANY_THROW(vec1 == vec2);
+    FAIL();
   } catch (...) {
   }
 
@@ -398,7 +398,7 @@ TEST(VectorTest, ctor_move_throwing_alloc_not_default) {
   try {
     TargetVector<throwing, state_allocator<throwing>> vec2(std::move(vec1),
                                                            not_default);
-    ASSERT_ANY_THROW(vec1 == vec2);
+    FAIL();
   } catch (...) {
   }
 
@@ -1747,6 +1747,7 @@ TEST(VectorTest, valid_constexpr) {
 
 TEST(VectorTest, perfomance) {
   using namespace std::chrono;
+  using scale_t = microseconds;
   int inserts = 1000;
   TargetVector<safe> t_vec;
   std::vector<safe> std_vec;
@@ -1760,8 +1761,7 @@ TEST(VectorTest, perfomance) {
   }
   finish = high_resolution_clock::now();
   std::cout << "TargetVector " << inserts << " insertions time: ";
-  std::cout << duration_cast<milliseconds>(finish - start).count();
-  std::cout << " ms" << std::endl;
+  std::cout << duration_cast<scale_t>(finish - start) << std::endl;
 
   start = high_resolution_clock::now();
   for (int i = 0; i < inserts; ++i) {
@@ -1769,6 +1769,5 @@ TEST(VectorTest, perfomance) {
   }
   finish = high_resolution_clock::now();
   std::cout << "std::vector " << inserts << " insertions time: ";
-  std::cout << duration_cast<milliseconds>(finish - start).count();
-  std::cout << " ms" << std::endl;
+  std::cout << duration_cast<scale_t>(finish - start) << std::endl;
 }
