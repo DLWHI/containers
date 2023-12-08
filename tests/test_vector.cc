@@ -496,6 +496,48 @@ TEST(VectorTest, assignment_move_with_alloc_no_realloc) {
   ASSERT_EQ(vec2.back(), safe());
 }
 
+TEST(VectorTest, swap) {
+  TargetVector<not_safe> vec1(10, not_safe("one"));
+                                                 
+  TargetVector<not_safe> vec2(33, not_safe("two"));
+  
+  TargetVector<not_safe> exp1(vec2);
+  TargetVector<not_safe> exp2(vec1);
+                                                 
+  not_safe* ptr1 = vec1.data();
+  not_safe* ptr2 = vec2.data();
+
+  vec1.swap(vec2);
+
+  ASSERT_EQ(vec1, exp1);
+  ASSERT_EQ(vec2, exp2);
+  ASSERT_EQ(vec1.data(), ptr2);
+  ASSERT_EQ(vec2.data(), ptr1);
+}
+
+TEST(VectorTest, swap_with_alloc) {
+  state_allocator<not_safe> first("first");
+  state_allocator<not_safe> second("second");
+
+  TargetVector<not_safe, state_allocator<not_safe>> vec1(10, not_safe("one"), first);                                               
+  TargetVector<not_safe, state_allocator<not_safe>> vec2(33, not_safe("two"), second);
+  
+  TargetVector<not_safe, state_allocator<not_safe>> exp1(vec2);
+  TargetVector<not_safe, state_allocator<not_safe>> exp2(vec1);
+                                                 
+  not_safe* ptr1 = vec1.data();
+  not_safe* ptr2 = vec2.data();
+
+  vec1.swap(vec2);
+
+  ASSERT_EQ(vec1, exp1);
+  ASSERT_EQ(vec2, exp2);
+  ASSERT_EQ(vec1.data(), ptr2);
+  ASSERT_EQ(vec2.data(), ptr1);
+  ASSERT_EQ(vec1.get_allocator(), second);
+  ASSERT_EQ(vec2.get_allocator(), first);
+}
+
 //==============================================================================
 // cmp and random access
 TEST(VectorTest, comparison_1) {

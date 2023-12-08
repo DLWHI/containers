@@ -550,6 +550,9 @@ class vector {
   constexpr void swap(vector& other) noexcept(
       al_traits::propagate_on_container_swap::value ||
       al_traits::is_always_equal::value) {
+    if (al_traits::propagate_on_container_swap::value && al_ != other.al_) {
+      std::swap(al_, other.al_);
+    }
     buf_.swap(other.buf_);
     std::swap(size_, other.size_);
   }
