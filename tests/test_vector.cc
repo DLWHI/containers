@@ -1782,6 +1782,17 @@ TEST(VectorTest, emplace_back_throwing) {
   }
 }
 
+TEST(VectorTest, stream) {
+  TargetVector<safe> vec{
+      safe("Aileen"), safe("Anna"), safe("Louie"),
+      safe("Noel"), safe("Grace"),
+  };
+  std::stringstream stream;
+  std::string expected("Aileen Anna Louie Noel Grace");
+  stream << vec;
+  EXPECT_EQ(expected, stream.str());
+}
+
 TEST(VectorTest, valid_constexpr) {
   constexpr int cexper = constexpr_check(0);
   ASSERT_EQ(cexper, 0);

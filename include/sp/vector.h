@@ -151,7 +151,7 @@ class vector {
   constexpr vector& operator=(vector&& other) noexcept(
       al_traits::propagate_on_container_move_assignment::value ||
       al_traits::is_always_equal::value) {
-    if (al_traits::propagate_on_container_move_assignment::value) {
+    if constexpr (al_traits::propagate_on_container_move_assignment::value) {
       al_ = std::move(other.al_);
     }
     if (other.size_ > buf_.cap || !std::is_nothrow_move_assignable<T>::value) {
@@ -550,7 +550,8 @@ class vector {
   constexpr void swap(vector& other) noexcept(
       al_traits::propagate_on_container_swap::value ||
       al_traits::is_always_equal::value) {
-    if (al_traits::propagate_on_container_swap::value && al_ != other.al_) {
+    if constexpr (al_traits::propagate_on_container_swap::value ||
+                  !al_traits::is_always_equal::value) {
       std::swap(al_, other.al_);
     }
     buf_.swap(other.buf_);

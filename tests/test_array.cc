@@ -1,13 +1,15 @@
 #include <gtest/gtest.h>
-
-#include <sstream>
-#include <random>
-
 #include <sp/array.h>
 
+#include <random>
+#include <sstream>
+
+template <typename T, sp::size_t N>
+using TargetArray = sp::array<T, N>;
+
 constexpr int constexpr_check(int val) {
-  sp::array<int, 7> arr1 = {1, 2, 3, 4, 5, 0, 0};
-  sp::array<int, 7> arr2 = {1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr1 = {1, 2, 3, 4, 5, 0, 0};
+  TargetArray<int, 7> arr2 = {1, 2, 3, 4, 5, 6, 7};
 
   arr1.swap(arr2);
   arr2.fill(0);
@@ -18,206 +20,184 @@ constexpr int constexpr_check(int val) {
 }
 
 TEST(ArrayTest, init) {
-  sp::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
-
-  EXPECT_EQ(arr.size(), 7);
-  EXPECT_EQ(arr.max_size(), 7);
-  EXPECT_FALSE(arr.empty());
+  TargetArray<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  ASSERT_EQ(arr.size(), 7);
+  ASSERT_EQ(arr.max_size(), 7);
+  ASSERT_FALSE(arr.empty());
 }
 
 TEST(ArrayTest, no_element_init) {
-  sp::array<int, 0> arr;
+  TargetArray<int, 0> arr;
 
-  EXPECT_EQ(arr.size(), 0);
-  EXPECT_EQ(arr.max_size(), 0);
-  EXPECT_TRUE(arr.empty());
+  ASSERT_EQ(arr.size(), 0);
+  ASSERT_EQ(arr.max_size(), 0);
+  ASSERT_TRUE(arr.empty());
 }
 
 TEST(ArrayTest, zero_init) {
-  sp::array<int, 1000> arr{0};
+  TargetArray<int, 1000> arr{0};
 
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(arr[i], 0);
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], 0);
 }
 
 TEST(ArrayTest, braced_list_init) {
-  sp::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
 
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(arr[i], i + 1);
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], i + 1);
 }
 
-
-
 TEST(ArrayTest, random_access) {
-  sp::array<int, 15> arr{0};
+  TargetArray<int, 15> arr{0};
   for (int i = 0; i < arr.size(); i++) {
-    EXPECT_EQ(arr[i], 0);
+    ASSERT_EQ(arr[i], 0);
     arr[i] = i + 1;
   }
   for (int i = 0; i < arr.size(); i++) {
-    EXPECT_EQ(arr[i], i + 1);
+    ASSERT_EQ(arr[i], i + 1);
   }
 }
 
 TEST(ArrayTest, random_access_bounds) {
-  sp::array<int, 7> arr{0};
+  TargetArray<int, 7> arr{0};
   for (int i = 0; i < arr.size(); i++) {
-    EXPECT_EQ(arr.at(i), 0);
+    ASSERT_EQ(arr.at(i), 0);
     arr.at(i) = i + 1;
   }
   for (int i = 0; i < arr.size(); i++) {
-    EXPECT_EQ(arr.at(i), i + 1);
+    ASSERT_EQ(arr.at(i), i + 1);
   }
-  EXPECT_THROW(arr.at(-1), std::out_of_range);
-  EXPECT_THROW(arr.at(arr.size()), std::out_of_range);
+  ASSERT_THROW(arr.at(-1), std::out_of_range);
+  ASSERT_THROW(arr.at(arr.size()), std::out_of_range);
 }
 
 TEST(ArrayTest, front_back_access) {
-  sp::array<int, 7> arr{0};
+  TargetArray<int, 7> arr{0};
   for (int i = 0; i < arr.size(); i++) {
-    EXPECT_EQ(arr[i], 0);
+    ASSERT_EQ(arr[i], 0);
     arr[i] = i + 1;
   }
-  EXPECT_EQ(arr.front(), 1);
-  EXPECT_EQ(arr.back(), arr.size());
+  ASSERT_EQ(arr.front(), 1);
+  ASSERT_EQ(arr.back(), arr.size());
 }
 
 TEST(ArrayTest, zero_element_access) {
-  sp::array<int, 0> arr;
-  EXPECT_THROW(arr.at(4), std::out_of_range);
-  EXPECT_THROW(arr.at(0), std::out_of_range);
+  TargetArray<int, 0> arr;
+  ASSERT_THROW(arr.at(4), std::out_of_range);
+  ASSERT_THROW(arr.at(0), std::out_of_range);
 }
 
 TEST(ArrayTest, data_access) {
-  sp::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
   int* ptr = arr.data();
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(ptr[i], i + 1);
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(ptr[i], i + 1);
 }
 
-
-
 TEST(ArrayTest, comparison_1) {
-  sp::array<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
-  sp::array<int, 7> arr2{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr2{1, 2, 3, 4, 5, 6, 7};
 
-  EXPECT_TRUE(arr1 == arr1);
-  EXPECT_FALSE(arr1 != arr1);
-  EXPECT_TRUE(arr1 == arr2);
-  EXPECT_FALSE(arr1 != arr2);
+  ASSERT_TRUE(arr1 == arr1);
+  ASSERT_FALSE(arr1 != arr1);
+  ASSERT_TRUE(arr1 == arr2);
+  ASSERT_FALSE(arr1 != arr2);
 }
 
 TEST(ArrayTest, comparison_2) {
-  sp::array<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
-  sp::array<int, 7> arr2{7, 6, 5, 4, 3, 2, 1};
+  TargetArray<int, 7> arr1{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr2{7, 6, 5, 4, 3, 2, 1};
 
-  EXPECT_FALSE(arr1 == arr2);
-  EXPECT_TRUE(arr1 != arr2);
-  EXPECT_FALSE(arr2 == arr1);
-  EXPECT_TRUE(arr2 != arr1);
+  ASSERT_FALSE(arr1 == arr2);
+  ASSERT_TRUE(arr1 != arr2);
+  ASSERT_FALSE(arr2 == arr1);
+  ASSERT_TRUE(arr2 != arr1);
 }
 
 TEST(ArrayTest, comparison_self) {
-  sp::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
 
-  EXPECT_TRUE(arr == arr);
-  EXPECT_FALSE(arr != arr);
+  ASSERT_TRUE(arr == arr);
+  ASSERT_FALSE(arr != arr);
 }
 
 TEST(ArrayTest, comparison_empty) {
-  sp::array<int, 0> arr1;
-  sp::array<int, 0> arr2;
+  TargetArray<int, 0> arr1;
+  TargetArray<int, 0> arr2;
 
-
-  EXPECT_TRUE(arr1 == arr2);
-  EXPECT_FALSE(arr1 != arr2);
+  ASSERT_TRUE(arr1 == arr2);
+  ASSERT_FALSE(arr1 != arr2);
 }
 
-
-
 TEST(ArrayTest, fill_1) {
-  sp::array<int, 7> arr;
+  TargetArray<int, 7> arr;
 
   arr.fill(7);
 
-  for (int n: arr)
-    EXPECT_EQ(n, 7);
+  for (int n : arr) ASSERT_EQ(n, 7);
 }
 
 TEST(ArrayTest, fill_2) {
-  sp::array<int, 7> arr;
+  TargetArray<int, 7> arr;
 
   arr.fill(0);
 
-  for (auto it = arr.begin(); it != arr.end(); it++)
-    EXPECT_EQ(*it, 0);
+  for (auto it = arr.begin(); it != arr.end(); it++) ASSERT_EQ(*it, 0);
 }
 
 TEST(ArrayTest, fill_empty) {
-  sp::array<int, 0> arr;
+  TargetArray<int, 0> arr;
 
   arr.fill(7);
 
-  EXPECT_TRUE(arr.empty());
-  EXPECT_EQ(arr.begin(), arr.end());
+  ASSERT_TRUE(arr.empty());
+  ASSERT_EQ(arr.begin(), arr.end());
 }
 
+TEST(ArrayTest, to_array) {
+  auto arr = sp::to_array({1, 2, 3, 4, 5, 6, 7});
 
-
-TEST(ArrayTest, make_array) {
-  auto arr = sp::make_array(1, 2, 3, 4, 5, 6, 7);
-
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(arr[i], i + 1);
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], i + 1);
 }
-#ifndef _MSC_VER
-TEST(ArrayTest, make_array_different_convertible) {
-  auto arr = sp::make_array(1u, 2u, 3u, 4, 5, 6l, 7l);
 
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(arr[i], i + 1);
+TEST(ArrayTest, to_array_custom_order) {
+  auto arr =
+      sp::to_array({1, 2, 3, 4, 5, 6, 7},
+                   std::integer_sequence<sp::size_t, 6, 5, 4, 3, 2, 1, 0>{});
+
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], 7 - i);
 }
-#endif
-TEST(ArrayTest, make_array_constexpr_1) {
-  constexpr auto arr = sp::make_array(1, 2, 3, 4, 5, 6, 7);
 
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(arr[i], i + 1);
+TEST(ArrayTest, to_array_copy) {
+  auto arr =
+      sp::to_array({1, 2, 3, 4, 5, 6, 7},
+                   std::integer_sequence<sp::size_t, 6, 6, 6, 6, 6, 6, 6>{});
+
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], 7);
 }
-#ifndef _MSC_VER
-TEST(ArrayTest, make_array_constexpr_2) {
-  constexpr auto arr = sp::make_array(1u, 2u, 3u, 4, 5, 6l, 7l);
 
-  for (int i = 0; i < arr.size(); i++)
-    EXPECT_EQ(arr[i], i + 1);
+TEST(ArrayTest, to_array_constexpr) {
+  constexpr auto arr = sp::to_array({1, 2, 3, 4, 5, 6, 7});
+
+  for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], i + 1);
 }
-#endif
-
 
 TEST(ArrayTest, valid_constexpr_1) {
-  constexpr sp::array<int, 7> arr{7, 7, 7, 7, 7, 7, 7};
+  constexpr TargetArray<int, 7> arr{7, 7, 7, 7, 7, 7, 7};
 
-  for (auto it = arr.begin(); it != arr.end(); it++)
-    EXPECT_EQ(*it, 7);
+  for (auto it = arr.begin(); it != arr.end(); it++) ASSERT_EQ(*it, 7);
 }
 
 TEST(ArrayTest, valid_constexpr_2) {
   constexpr int cexper = constexpr_check(-7);
-  EXPECT_EQ(cexper, -7);
+  ASSERT_EQ(cexper, -7);
 }
-
-
 
 TEST(ArrayTest, stream) {
-  sp::array<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
+  TargetArray<int, 7> arr{1, 2, 3, 4, 5, 6, 7};
   std::stringstream stream;
-  std::string expected("1 2 3 4 5 6 7");
+  std::string ASSERTed("1 2 3 4 5 6 7");
   stream << arr;
-  EXPECT_EQ(expected, stream.str());
+  ASSERT_EQ(ASSERTed, stream.str());
 }
-
-
 
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
