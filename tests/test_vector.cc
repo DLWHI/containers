@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-#include "dlwhi/vector.h"
+#include "sp/vector.h"
 #include "gtest/gtest.h"
 #include "test_helpers.h"
 

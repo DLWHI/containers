@@ -1,5 +1,5 @@
-#ifndef DLWHI_CONTAINERS_NODE_ITERATOR_H_
-#define DLWHI_CONTAINERS_NODE_ITERATOR_H_
+#ifndef SP_CONTAINERS_NODE_ITERATOR_H_
+#define SP_CONTAINERS_NODE_ITERATOR_H_
 #include <iterator>
 #include <cstdint>
 
@@ -103,4 +103,4 @@ class node_iterator {
   node_type* node_;
 };
 }  // namespace s21
-#endif  // DLWHI_CONTAINERS_NODE_ITERATOR_H_
+#endif  // SP_CONTAINERS_NODE_ITERATOR_H_

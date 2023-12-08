@@ -1,5 +1,5 @@
-#ifndef DLWHI_CONTAINERS_POINTER_ITERATOR_H_
-#define DLWHI_CONTAINERS_POINTER_ITERATOR_H_
+#ifndef SP_CONTAINERS_POINTER_ITERATOR_H_
+#define SP_CONTAINERS_POINTER_ITERATOR_H_
 #include <iterator>
 #include <cstdint>
 
@@ -22,10 +22,6 @@ class pointer_iterator {
 
   constexpr pointer_iterator() noexcept : ptr_(nullptr){};
   constexpr explicit pointer_iterator(T* data) noexcept : ptr_(data){};
-  constexpr pointer_iterator(const pointer_iterator&) = default;
-  constexpr pointer_iterator(pointer_iterator&&) = default;
-  constexpr pointer_iterator& operator=(const pointer_iterator&) = default;
-  constexpr pointer_iterator& operator=(pointer_iterator&&) = default;
   constexpr virtual ~pointer_iterator() = default;
 
   constexpr T* data() const noexcept { return ptr_; }
@@ -104,4 +100,4 @@ class pointer_iterator {
   T* ptr_;
 };
 }  // namespace s21
-#endif  // DLWHI_CONTAINERS_POINTER_ITERATOR_H_
+#endif  // SP_CONTAINERS_POINTER_ITERATOR_H_

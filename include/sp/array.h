@@ -1,5 +1,5 @@
-#ifndef DLWHI_CONTAINERS_ARRAY_H_
-#define DLWHI_CONTAINERS_ARRAY_H_
+#ifndef SP_CONTAINERS_ARRAY_H_
+#define SP_CONTAINERS_ARRAY_H_
 #include <cstdint>
 #include <ostream>
 #include <stdexcept>
@@ -185,4 +185,4 @@ struct array<T, 0> {
 
 
 }  // namespace s21
-#endif  // DLWHI_CONTAINERS_ARRAY_H_
+#endif  // SP_CONTAINERS_ARRAY_H_

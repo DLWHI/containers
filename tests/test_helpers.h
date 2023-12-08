@@ -1,5 +1,5 @@
-#ifndef DLWHI_TESTS_TEST_HELPERS_H_
-#define DLWHI_TESTS_TEST_HELPERS_H_
+#ifndef SP_TESTS_TEST_HELPERS_H_
+#define SP_TESTS_TEST_HELPERS_H_
 
 #include <memory>
 #include <stdexcept>
@@ -185,4 +185,4 @@ template <typename L, typename R>
 bool operator!=(const state_allocator<L>& lhs, const state_allocator<R>& rhs) {
   return !lhs.equals(rhs);
 }
-#endif  // DLWHI_TESTS_TEST_HELPERS_H_
+#endif  // SP_TESTS_TEST_HELPERS_H_

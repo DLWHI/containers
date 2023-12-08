@@ -3,7 +3,7 @@
 #include <sstream>
 #include <random>
 
-#include <dlwhi/array.h>
+#include <sp/array.h>
 
 constexpr int constexpr_check(int val) {
   sp::array<int, 7> arr1 = {1, 2, 3, 4, 5, 0, 0};

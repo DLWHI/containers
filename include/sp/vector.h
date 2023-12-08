@@ -1,5 +1,5 @@
-#ifndef DLWHI_CONTAINERS_VECTOR_H_
-#define DLWHI_CONTAINERS_VECTOR_H_
+#ifndef SP_CONTAINERS_VECTOR_H_
+#define SP_CONTAINERS_VECTOR_H_
 
 #include <algorithm>
 #include <ostream>
@@ -701,4 +701,4 @@ class vector {
   pointer_buffer buf_;
 };
 }  // namespace sp
-#endif  // DLWHI_CONTAINERS_VECTOR_H_
+#endif  // SP_CONTAINERS_VECTOR_H_
