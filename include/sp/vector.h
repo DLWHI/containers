@@ -38,7 +38,7 @@ class vector {
   // Allocator type must meet additional requirements of DefaultConstructible
   constexpr vector() noexcept(
       std::is_nothrow_default_constructible<Allocator>::value)
-      : size_(0), al_(Allocator()), buf_(&al_) {}
+      : size_(0), buf_(&al_) {}
 
   // No additional requirements on template types
   constexpr explicit vector(const Allocator& al) noexcept
@@ -125,7 +125,7 @@ class vector {
       al_ = other.al_;
     }
     if (other.size_ > buf_.cap || !std::is_nothrow_copy_assignable<T>::value) {
-      pointer_buffer temp(other.buf_.cap, &al_);
+      pointer_buffer temp(other.buf_.cap, &al_, buf_.ptr);
       fill(temp.ptr, other.buf_.ptr, other.buf_.ptr + other.size_);
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
@@ -155,7 +155,7 @@ class vector {
       al_ = std::move(other.al_);
     }
     if (other.size_ > buf_.cap || !std::is_nothrow_move_assignable<T>::value) {
-      pointer_buffer temp(other.buf_.cap, &al_);
+      pointer_buffer temp(other.buf_.cap, &al_, buf_.ptr);
       move_from(temp.ptr, other.buf_.ptr, other.size_);
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
@@ -252,7 +252,7 @@ class vector {
       throw std::length_error("Invalid count provided");
     }
     if (count > buf_.cap) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, count), &al_);
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, count), &al_, buf_.ptr);
       fill(temp.ptr, count, value);
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
@@ -275,7 +275,7 @@ class vector {
       throw std::length_error("Invalid or too big range provided");
     }
     if (count > buf_.cap) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, count), &al_);
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, count), &al_, buf_.ptr);
       fill(temp.ptr, first, last);
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
@@ -329,7 +329,7 @@ class vector {
     if (count == size_) {
       return;
     } else if (count >= buf_.cap) {
-      pointer_buffer temp(count, &al_);
+      pointer_buffer temp(count, &al_, buf_.ptr);
       move_from(temp.ptr, buf_.ptr, size_);
       try {
         fill(temp.ptr + size_, count - size_);
@@ -353,7 +353,7 @@ class vector {
     if (count == size_) {
       return;
     } else if (count >= buf_.cap) {
-      pointer_buffer temp(count, &al_);
+      pointer_buffer temp(count, &al_, buf_.ptr);
       move_from(temp.ptr, buf_.ptr, size_);
       try {
         fill(temp.ptr + size_, count - size_, value);
@@ -402,7 +402,8 @@ class vector {
                             const_reference value) {
     size_t ind = pos - begin();
     if (size_ + count >= buf_.cap || !std::is_nothrow_swappable<T>::value) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_);
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_,
+                          buf_.ptr);
       fill(temp.ptr + ind, count, value);
       try {
         split_buffer(temp.ptr, ind, count);
@@ -429,7 +430,8 @@ class vector {
     size_t ind = pos - begin();
     size_t count = std::distance(first, last);
     if (count + size_ >= buf_.cap || !std::is_nothrow_swappable<T>::value) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_);
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_,
+                          buf_.ptr);
       fill(temp.ptr + ind, first, last);
       try {
         split_buffer(temp.ptr, ind, count);
@@ -465,7 +467,7 @@ class vector {
       }
       al_traits::destroy(al_, buf_.ptr + size_ - 1);
     } else {
-      pointer_buffer temp(buf_.cap, &al_);
+      pointer_buffer temp(buf_.cap, &al_, buf_.ptr);
       split_buffer(temp.ptr, ind + 1, -1);
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
@@ -486,7 +488,7 @@ class vector {
       }
       destroy_content(buf_.ptr + size_ - count, count);
     } else {
-      pointer_buffer temp(buf_.cap, &al_);
+      pointer_buffer temp(buf_.cap, &al_, buf_.ptr);
       split_buffer(temp.ptr, finish, -count);
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
@@ -501,7 +503,8 @@ class vector {
   constexpr iterator emplace(const_iterator pos, Args&&... args) {
     size_t ind = pos - begin();
     if (size_ == buf_.cap || !std::is_nothrow_move_assignable<T>::value) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_t(1)), &al_);
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_t(1)), &al_,
+                          buf_.ptr);
       al_traits::construct(al_, temp.ptr + ind, std::forward<Args>(args)...);
       try {
         split_buffer(temp.ptr, ind, 1);
@@ -529,7 +532,8 @@ class vector {
   template <typename... Args>
   constexpr T& emplace_back(Args&&... args) {
     if (size_ >= buf_.cap) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_t(1)), &al_);
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_t(1)), &al_,
+                          buf_.ptr);
       al_traits::construct(al_, temp.ptr + size_, std::forward<Args>(args)...);
       try {
         move_from(temp.ptr, buf_.ptr, size_);
@@ -592,17 +596,18 @@ class vector {
   struct pointer_buffer {
     constexpr explicit pointer_buffer(Allocator* al = nullptr)
         : alc(al), ptr(nullptr), cap(0) {}
-    constexpr pointer_buffer(size_t size, Allocator* al) : alc(al), cap(size) {
+    constexpr pointer_buffer(size_t size, Allocator* al, pointer hint = nullptr)
+        : alc(al), cap(size) {
       if (cap < 0) {
         throw std::invalid_argument("Invalid memory buffer length");
       }
-      ptr = (cap) ? alc->allocate(size) : nullptr;
+      ptr = (cap) ? al_traits::allocate(*alc, size, hint) : nullptr;
     }
     constexpr pointer_buffer(const pointer_buffer&) = delete;
     constexpr pointer_buffer(pointer_buffer&& other) = delete;
     constexpr pointer_buffer& operator=(const pointer_buffer&) = delete;
     constexpr pointer_buffer& operator=(pointer_buffer&& other) = delete;
-    constexpr ~pointer_buffer() { alc->deallocate(ptr, cap); }
+    constexpr ~pointer_buffer() { al_traits::deallocate(*alc, ptr, cap); }
 
     constexpr void swap(pointer_buffer& other) noexcept(
         al_traits::propagate_on_container_swap::value ||
