@@ -2,7 +2,10 @@
 #define SP_CONTAINERS_VECTOR_H_
 
 #include <algorithm>
+#include <cstdint>
 #include <ostream>
+#include <stdexcept>
+#include <type_traits>
 
 #include "pointer_iterator.h"
 #include "reverse_iterator.h"
@@ -13,6 +16,7 @@ using size_t = int64_t;
 
 // T type must meet requirements of Erasable
 // Allocator type must meet requirements of Allocator
+// Methods may have additional reuirements on types
 template <typename T, class Allocator = std::allocator<T>>
 class vector {
   using al_traits = std::allocator_traits<Allocator>;
@@ -77,7 +81,9 @@ class vector {
 
   // T must meet additional requirements of CopyInsertable into *this
   constexpr vector(const vector& other)
-      : size_(other.size_), al_(other.al_), buf_(other.buf_.cap, &al_) {
+      : size_(other.size_),
+        al_(al_traits::select_on_container_copy_construction(other.al_)),
+        buf_(other.buf_.cap, &al_) {
     fill(buf_.ptr, other.begin(), other.end());
   }
 
@@ -104,7 +110,7 @@ class vector {
   constexpr vector(vector&& other, const Allocator& al) noexcept(
       al_traits::is_always_equal::value)
       : size_(0), al_(al), buf_(0, &al_) {
-    if (al == other.get_allocator()) {
+    if (al == other.al_) {
       swap(other);
     } else {
       pointer_buffer temp(other.size_, &al_);

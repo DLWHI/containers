@@ -1,5 +1,5 @@
-#ifndef SRC_CONTAINERS_S21_LIST_H_
-#define SRC_CONTAINERS_S21_LIST_H_
+#ifndef SP_CONTAINERS_LIST_H_
+#define SP_CONTAINERS_LIST_H_
 
 #include <cstdint>
 #include <initializer_list>
@@ -19,11 +19,12 @@ using size_t = int64_t;
 template <typename T, typename Allocator = std::allocator<T>>
 class list {
   struct Node;
+  struct ValueNode;
 
-  using node_type = Node;
-  using node_ptr = Node*;
-  using rebind_alloc = typename std::allocator_traits<Allocator>::template rebind_alloc<node_type>;
+  using rebind_alloc = typename std::allocator_traits<
+      Allocator>::template rebind_alloc<ValueNode>;
   using rebind_traits = std::allocator_traits<rebind_alloc>;
+
  public:
   template <typename U>
   class ListIterator;
@@ -34,129 +35,154 @@ class list {
   using reference = T&;
   using const_reference = const T&;
   using move_reference = T&&;
-  using size_t = int64_t;
+  using size_t = sp::size_t;
 
   using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
 
-  using iterator = sp::node_iterator<node_type, list>;
-  using const_iterator = sp::node_iterator<const node_type, list>;
+  using iterator = sp::node_iterator<T, Node, list>;
+  using const_iterator = sp::node_iterator<const T, Node, list>;
   using reverse_iterator = sp::reverse_iterator<iterator>;
   using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
 
-  list() : al_(Allocator()), node_c_(0), head_(node_al_.allocate(1)){
-    head_->construct_head(al_);
+  list() noexcept(std::is_nothrow_default_constructible<rebind_alloc>::value)
+      : size_(0) {}
+
+  explicit list(const Allocator& al) noexcept
+      : al_(static_cast<rebind_alloc>(al)), size_(0) {}
+
+  list(size_t count, const_reference val, const Allocator& al = Allocator())
+      : al_(static_cast<rebind_alloc>(al)), size_(count) {
+    push_nodes(&head_, count, val);
   };
 
-  explicit list(const Allocator& alloc) : al_(alloc), node_c_(0), head_(node_al_.allocate(1)){
-    head_->construct_head(al_);
-  };
-
-  list(size_t count, const_reference val, const Allocator& alloc = Allocator()) 
-      : al_(alloc), node_c_(count), head_(node_al_.allocate(1)){
-    head_->construct_head(al_);
-    construct_multiple_nodes(head_, count, val);
-  };
-
-  list(size_t count, const Allocator& alloc = Allocator()) 
-      : al_(alloc), node_c_(count), head_(node_al_.allocate(1)) {
-    head_->construct_head(al_);
-    construct_multiple_nodes(head_, count);
+  list(size_t count, const Allocator& al = Allocator())
+      : al_(static_cast<rebind_alloc>(al)), size_(count) {
+    push_nodes(&head_, count);
   }
 
   template <typename InputIterator>
-  list(InputIterator start, InputIterator end, const Allocator& alloc = Allocator())
-      : al_(alloc), node_c_(std::distance(start, end)), head_(node_al_.allocate(1)) {
-    head_->construct_head(al_);
-    construct_multiple_nodes(head_, start, end);
+  list(InputIterator first, InputIterator last,
+       const Allocator& al = Allocator())
+      : al_(static_cast<rebind_alloc>(al)), size_(std::distance(first, last)) {
+    push_nodes(&head_, first, last);
   }
 
-  list(std::initializer_list<T> vals, const Allocator& alloc = Allocator()) 
-      : list(vals.begin(), vals.end(), alloc) { }
+  list(std::initializer_list<T> vals, const Allocator& al = Allocator())
+      : list(vals.begin(), vals.end(), al) {}
 
-  list(const list& other) : list(other.begin(), other.end(), other.al_) { }
+  list(const list& other) : list(other.begin(), other.end(), other.al_) {}
 
-  list(const list& other, const Allocator& alloc) : list(other.begin(), other.end(), alloc) { };
+  list(const list& other, const Allocator& al)
+      : al_(al_traits::select_on_container_copy_construction(other.al_)),
+        size_(other.size_) {
+    push_nodes(&head_, other.begin(), other.end());
+  };
 
-  list(list&& other) : list() {*this = std::move(other); }
+  list(list&& other) : size_(other.size_) {
+    if constexpr (!al_traits::is_always_equal::value) {
+      al_ = std::move(other.al_);
+    }
+    head_.bind(other.head_.prev_node, other.head_.next_node);
+    other.head_.unbind();
+    other.size_ = 0;
+  }
 
-  list(list&& other, const Allocator& alloc) : list(alloc) {
-    std::swap(node_c_, other.node_c_);
+  list(list&& other, const Allocator& al) : list(al) {
+    if (al == other.al_) {
+      swap(other);
+    } else {
+      pointer_buffer temp(other.size_, &al_);
+      move_from(temp.ptr, other.buf_.ptr, other.size_);
+      buf_.swap(temp);
+      size_ = other.size_;
+    }
+    std::swap(size_, other.size_);
     std::swap(head_, other.head_);
   }
 
-  list& operator=(list& other) {
-    list cpy(other);
-    *this = std::move(cpy);
-    return *this;
+  // list& operator=(list& other) {
+  //   list cpy(other);
+  //   *this = std::move(cpy);
+  //   return *this;
+  // }
+
+  // list& operator=(list&& other) {
+  //   std::swap(size_, other.size_);
+  //   std::swap(head_, other.head_);
+  //   node_al_ = std::move(other.node_al_);
+  //   al_ = std::move(other.al_);
+  //   return *this;
+  // }
+
+  virtual ~list() noexcept { clear(); }
+
+  //============================================================================
+  allocator_type get_allocator() const noexcept {
+    return static_cast<Allocator>(al_);
   }
 
-  list& operator=(list&& other) {
-    std::swap(node_c_, other.node_c_);
-    std::swap(head_, other.head_);
-    node_al_ = std::move(other.node_al_);
-    al_ = std::move(other.al_);
-    return *this;
-  }
+  reference front() { return cast(head_.next_node)->data; }
+  reference back() { return cast(head_.prev_node)->data; }
 
-  virtual ~list() {
-    destroy_multiple_nodes(head_->next(), head_);
-    if constexpr (std::is_default_constructible<T>::value)
-      al_traits::destroy(al_, &(head_->data));
-    node_al_.deallocate(head_, 1);
-  }
+  const_reference front() const { return cast(head_.next_node)->data; }
+  const_reference back() const { return cast(head_.prev_node)->data; }
 
-  // //  List Element access:---------------------------------------------------
-  reference front() { return head_->next()->data; }
-  reference back() { return head_->prev()->data; }
-  
-  const_reference front() const { return head_->next()->data; }
-  const_reference back() const { return head_->prev()->data; }
-
-  
-  iterator begin() { return iterator(head_->next()); }
-  const_iterator begin() const { return cbegin(); }
-  const_iterator cbegin() const { return const_iterator(head_->next()); }
+  iterator begin() { return iterator(head_.next_node); }
+  const_iterator begin() const { return const_iterator(head_.next_node); }
+  const_iterator cbegin() const { return const_iterator(head_.next_node); }
 
   iterator end() { return iterator(head_); }
-  const_iterator end() const { return cend(); }
+  const_iterator end() const { return const_iterator(head_); }
   const_iterator cend() const { return const_iterator(head_); }
 
-  bool empty() const noexcept { return !node_c_;}
-  size_t max_size() const noexcept { return al_traits::max_size(al_); }
-  size_t size() const noexcept { return node_c_; }
+  bool empty() const noexcept { return !size_; }
+  size_t max_size() const noexcept { return rebind_traits::max_size(al_); }
+  size_t size() const noexcept { return size_; }
+  //============================================================================
 
-   void clear() {
-    destroy_multiple_nodes(head_->next(), head_);
-    node_c_ = 0;
-    head_->next_node = head_;
-    head_->prev_node = head_;
-   }
-
-  iterator insert(const_iterator pos, const_reference value) {
-    Node* some = node_al_.allocate(1);
-    Node* target = const_cast<Node*>(pos.base());
-    some->construct(target->prev_node, target, al_, value);
-    some->bind(target->prev_node, target);
-    node_c_ += 1;
-    return iterator(some);
+  bool integrity() const {
+    size_t count = 0;
+    Node* ptr = head_.next_node;
+    for (; ptr != &head_; ptr = ptr->next_node) {
+      ++count;
+    }
+    return count == size_;
   }
 
-  iterator insert(const_iterator pos, move_reference value) {
-    Node* some = node_al_.allocate(1);
-    Node* target = const_cast<Node*>(pos.base());
-    some->construct(target->prev_node, target, al_, std::forward<value_type>(value));
-    some->bind(target->prev_node, target);
-    node_c_ += 1;
-    return iterator(some);
+  void clear() noexcept {
+    pop_nodes(head_.next_node, &head_);
+    size_ = 0;
+    head_.next_node = &head_;
+    head_.prev_node = &head_;
   }
 
-  iterator insert(const_iterator pos, size_t count, const_reference value );
+  // iterator insert(const_iterator pos, const_reference value) {
+  //   Node* some = node_al_.allocate(1);
+  //   Node* target = const_cast<Node*>(pos.base());
+  //   some->construct(target->prev_node, target, al_, value);
+  //   some->bind(target->prev_node, target);
+  //   size_ += 1;
+  //   return iterator(some);
+  // }
 
-  template<typename InputIterator>
-  iterator insert(const_iterator start, InputIterator end, InputIterator last);
+  // iterator insert(const_iterator pos, move_reference value) {
+  //   Node* some = node_al_.allocate(1);
+  //   Node* target = const_cast<Node*>(pos.base());
+  //   some->construct(target->prev_node, target, al_,
+  //                   std::forward<value_type>(value));
+  //   some->bind(target->prev_node, target);
+  //   size_ += 1;
+  //   return iterator(some);
+  // }
 
-  iterator insert(const_iterator pos, std::initializer_list<T> vals);
+  // iterator insert(const_iterator pos, size_t count, const_reference value);
+
+  // template <typename InputIterator>
+  // iterator insert(const_iterator first, InputIterator end, InputIterator
+  // last);
+
+  // iterator insert(const_iterator pos, std::initializer_list<T> vals);
 
   // //  Deletes an element at pos
   // void erase(iterator pos) {
@@ -169,8 +195,8 @@ class list {
   // }
 
   // void push_back(const_reference value) {
-  //   //  insert puts a node at a position before the one iterator is pointing to
-  //   insert(end(), value);
+  //   //  insert puts a node at a position before the one iterator is pointing
+  //   to insert(end(), value);
   // }
 
   // void pop_back() { erase(end() - 1); }
@@ -179,10 +205,16 @@ class list {
 
   // void pop_front() { erase(begin()); }
 
-  // void swap(list& other) {
-  //   std::swap(counter_, other.counter_);
-  //   std::swap(head_, other.head_);
-  // }
+  void swap(list& other) noexcept(
+      al_traits::propagate_on_container_swap::value ||
+      al_traits::is_always_equal::value) {
+    if constexpr (al_traits::propagate_on_container_swap::value ||
+                  !al_traits::is_always_equal::value) {
+      std::swap(al_, other.al_);
+    }
+    std::swap(size_, other.size_);
+    head_.swap(other.head_);
+  }
 
   // void merge(list& other) {
   //   iterator iter = begin();
@@ -258,7 +290,8 @@ class list {
 
   // // void FrontBackSplit(list &initial, list &a, list &b) {
   // //       iterator middle = initial.begin();
-  // //       size_t limit = (initial.counter_ % 2 > 0) ? initial.counter_ / 2 + 1 : initial.counter_ / 2;
+  // //       size_t limit = (initial.counter_ % 2 > 0) ? initial.counter_ / 2 +
+  // 1 : initial.counter_ / 2;
   // //       size_t i = 0;
   // //       for (; i < limit; ++i) {
   // //           ++middle;
@@ -281,119 +314,127 @@ class list {
   // // }
 
   bool operator==(const list& other) const {
-    if (node_c_ != other.node_c_) {
+    if (size_ != other.size_) {
       return false;
-    } 
+    }
     const_iterator second = other.begin();
     for (auto first = begin(); first != end(); ++first) {
-      if (*first != *second)
-        return false;
+      if (*first != *second) return false;
     }
     return true;
   }
 
-  bool operator!=(const list& other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const list& other) const { return !(*this == other); }
 
-  friend std::ostream& operator<<(std::ostream& os, const list& some) {
-    const Node* ptr = some.head_->next_node;
-    for (; ptr->next_node != some.head_; ptr = ptr->next_node) {
+  friend std::ostream& operator<<(std::ostream& os, const list& target) {
+    const Node* ptr = target.head_.next_node;
+    for (; ptr->next_node != target.head_; ptr = ptr->next_node) {
       os << ptr->data << ' ';
     }
     os << ptr->data;
     return os;
   }
+
  private:
   struct Node {
-    using value_type = T;
-    using pointer = T*;
-    using reference = T&;
-    using allocator_type = Allocator;
-    using al_traits = std::allocator_traits<allocator_type>;
+    Node() noexcept : prev_node(this), next_node(this) {}
+    Node(Node* prev, Node* next) noexcept : prev_node(prev), next_node(next) {
+      prev->next_node = this;
+      next->prev_node = this;
+    }
+    virtual ~Node() = default;
 
-    Node* construct(Node* prev = nullptr, Node* next = nullptr) {
-      new(&prev_node) Node*(prev);
-      new(&next_node) Node*(next);
-      return this;
+    Node* next() const noexcept { return next_node; }
+    Node* prev() const noexcept { return prev_node; }
+
+    void bind(Node* prev, Node* next) noexcept {
+      prev_node = prev;
+      next_node = next;
+      prev->next_node = this;
+      next->prev_node = this;
     }
 
-    template <typename... Args>
-    Node* construct(allocator_type& al, Args&&... args) {
-      al_traits::construct(al, &data, std::forward<Args>(args)...);
-      return this;
+    void unbind() noexcept {
+      next_node->prev_node = prev_node;
+      prev_node->next_node = next_node;
+      prev_node = nullptr;
+      next_node = nullptr;
     }
 
-    template <typename... Args>
-    Node* construct(Node* prev, Node* next, allocator_type& al, Args&&... args) {
-      construct(prev, next);
-      return construct(al, std::forward<Args>(args)...);
+    void swap(Node& other) {
+      prev_node->next = &other;
+      next_node->prev = &other;
+      other.prev_node->next = this;
+      other.next_node->prev = this;
+      std::swap(prev_node, other.prev_node);
+      std::swap(next_node, other.next_node);
     }
-  
-    Node* construct_head(allocator_type& al) {
-      construct(this, this);
-      if constexpr (std::is_default_constructible<T>::value)
-        construct(al);
-      return this;
-    }
-
-    Node* next() const { return next_node;}
-    Node* prev() const { return prev_node;}
-
-    T& value() { return data;}
-    const T& value() const { return data;}
-
-    void bind(Node* lhs, Node* rhs) {
-      lhs->next_node = this;
-      rhs->prev_node = this;
-    }
-
-    // operator pointer_iterator<const T>() const noexcept {
-    //   return pointer_iterator<const T>(const_cast<const T*>(ptr_));
-    // }
 
     Node* prev_node;
     Node* next_node;
+  };
+
+  struct ValueNode final : public Node {
+    ValueNode() = default;
+    ValueNode(const T& value) noexcept(
+        std::is_nothrow_copy_constructible<T>::value)
+        : data(value) {}
+    ValueNode(const T& value, Node* prev,
+              Node* next) noexcept(std::is_nothrow_copy_constructible<T>::value)
+        : Node(prev, next), data(value) {}
+
+    template <typename... Args>
+    ValueNode(Node* prev, Node* next) noexcept(
+        std::is_nothrow_constructible<T, Args...>::value)
+        : Node(prev, next), data(value) {}
+
+    T& value() { return data; }
+    const T& value() const { return data; }
+
     T data;
   };
 
+  constexpr ValueNode* cast(Node* ptr) const {
+    return dynamic_cast<ValueNode*>(ptr);
+  }
+
   template <typename... Args>
-  node_ptr construct_multiple_nodes(node_ptr where, sp::size_t count, Args&&... args) {
-    for (size_t i = 0; i < count; ++i, where = where->next()) {
-      node_ptr some = node_al_.allocate(1);
-      some->construct(where, head_, al_, std::forward<Args>(args)...);
-      some->bind(where, head_);
+  Node* push_nodes(Node* where, sp::size_t count, Args&&... args) {
+    for (size_t i = 0; i < count; ++i, where = where->next_node) {
+      ValueNode* some = al_.allocate(1);
+      rebind_traits::construct(al_, some, std::forward<Args>(args)...);
+      some->bind(where, &head_);
     }
     return where;
   }
 
   template <typename InputIterator>
-  node_ptr construct_multiple_nodes(node_ptr where, InputIterator start, InputIterator end) {
-    for (; start != end; ++start, where = where->next()) {
-      node_ptr some = node_al_.allocate(1);
-      some->construct(where, head_, al_, *start);
-      some->bind(where, head_);
+  Node* push_nodes(Node* where, InputIterator first, InputIterator last) {
+    for (; first != last; ++first, where = where->next_node) {
+      ValueNode* some = al_.allocate(1);
+      rebind_traits::construct(al_, some, *first);
+      some->bind(where, &head_);
     }
     return where;
   }
 
-  void destroy_multiple_nodes(node_ptr start, node_ptr end) {
-    node_ptr fwd = start;
-    node_ptr bwd = start->next();
-    while(fwd != end) {
-      al_traits::destroy(al_, &(fwd->data));
-      node_al_.deallocate(fwd, 1);
-      fwd = bwd;
-      bwd = bwd->next();
+  void pop_nodes(Node* first, Node* last) {
+    Node* bwd = first;
+    Node* fwd = first->next_node;
+    while (bwd != last) {
+      ValueNode* x = cast(bwd);
+      rebind_traits::destroy(al_, x);
+      al_.deallocate(x, 1);
+      bwd = fwd;
+      fwd = fwd->next_node;
     }
   }
 
-  rebind_alloc node_al_;
-  allocator_type al_;
-  size_t node_c_;
-  node_ptr head_;
+  rebind_alloc al_;
+  size_t size_;
+  Node head_;
 };
 
-}  // namespace s21
+}  // namespace sp
 
-#endif  // SRC_CONTAINERS_S21_LIST_H_
+#endif  // SP_CONTAINERS_LIST_H_

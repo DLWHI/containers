@@ -1,11 +1,13 @@
-#include <gtest/gtest.h>
-
-#include <sstream>
 #include <list>
 #include <random>
+#include <sstream>
 
-#include <sp/list.h>
+#include "gtest/gtest.h"
+#include "sp/list.h"
 #include "test_helpers.h"
+
+template <typename T, typename Al = std::allocator<T>>
+using TargetList = sp::list<T, Al>;
 
 std::random_device ran_dev;
 std::mt19937 gen(ran_dev());
@@ -22,114 +24,116 @@ constexpr int loop = LOOP_COUNT;
 // constexpr int loop = 15;
 #endif
 
-// TEST(ListTest, ctor_default) {
-//   sp::list<no_def> lst;
-//   EXPECT_EQ(lst.size(), 0);
-//   EXPECT_TRUE(lst.empty());
-// }
+TEST(ListTest, ctor_default) {
+  TargetList<no_def> lst;
+  ASSERT_EQ(lst.size(), 0);
+  ASSERT_TRUE(lst.empty());
+}
 
 // TEST(ListTest, ctor_size_alloc_not_default) {
 //   sp::size_t size = uid(gen);
-//   std::allocator<safe> not_default;
-//   sp::list<safe> lst(size, not_default);
+//   state_allocator<safe> not_default;
+//   TargetList<safe, state_allocator<safe>> lst(size, not_default);
 
-//   EXPECT_EQ(lst.size(), size);
-//   EXPECT_EQ(lst.front(), safe());
-//   EXPECT_EQ(lst.back(), safe());
+//   ASSERT_EQ(lst.size(), size);
+//   ASSERT_EQ(lst.front(), safe());
+//   ASSERT_EQ(lst.back(), safe());
+//   ASSERT_EQ(lst.front().birth, constructed::kDef);
+//   ASSERT_EQ(lst.back().birth, constructed::kDef);
+//   ASSERT_EQ(lst.get_allocator(), not_default);
 // }
 
-// TEST(ListTest, ctor_size) {
-//   sp::size_t size = uid(gen);
-//   std::allocator<safe> not_default;
-//   const sp::list<safe> lst(size, not_default);
-//   EXPECT_EQ(lst.size(), size);
-//   EXPECT_FALSE(lst.empty());
-//   EXPECT_EQ(lst.front(), safe());
-//   EXPECT_EQ(lst.back(), safe());
-// }
+TEST(ListTest, ctor_size) {
+  sp::size_t size = uid(gen);
+  const TargetList<safe> lst(size, safe("lst"));
+  ASSERT_EQ(lst.size(), size);
+  ASSERT_FALSE(lst.empty());
+  ASSERT_EQ(lst.front(), safe("lst"));
+  ASSERT_EQ(lst.back(), safe("lst"));
+}
 
-// TEST(ListTest, ctor_size_value) {
-//   sp::size_t size = uid(gen);
-//   std::allocator<safe> not_default;
-//   const sp::list<safe> lst(size, safe("not defult"), not_default);
-//   EXPECT_EQ(lst.size(), size);
-//   EXPECT_FALSE(lst.empty());
-//   EXPECT_EQ(lst.front(), safe("not defult"));
-//   EXPECT_EQ(lst.back(), safe("not defult"));
-// }
+TEST(ListTest, ctor_size_value) {
+  sp::size_t size = uid(gen);
 
-// TEST(ListTest, ctor_from_stl_list) {
-//   sp::size_t size = uid(gen);
-//   std::allocator<safe> not_default;
-//   std::list<safe> from(size, safe("not default"));
+  const sp::list<safe> lst(size, safe("not defult"));
+  ASSERT_EQ(lst.size(), size);
+  ASSERT_FALSE(lst.empty());
+  ASSERT_EQ(lst.front(), safe("not defult"));
+  ASSERT_EQ(lst.back(), safe("not defult"));
+}
 
-//   sp::list<safe> lst(from.begin(), from.end(), not_default);
+TEST(ListTest, ctor_from_stl_list) {
+  sp::size_t size = uid(gen);
 
-//   EXPECT_EQ(lst.size(), from.size());
-//   EXPECT_EQ(lst.front(), from.front());
-//   EXPECT_EQ(lst.back(), from.back());
-// }
+  std::list<safe> from(size, safe("not default"));
 
-// TEST(ListTest, ctor_init_list) {
-//   std::initializer_list<std::string> list{
-//     "Karen",
-//     "Anastasia",
-//     "Alice",
-//     "Natalie",
-//     "Leyla",
-//     "Victoria"
-//   };
+  sp::list<safe> lst(from.begin(), from.end());
 
-//   std::allocator<std::string> not_default;
-//   sp::list<std::string> lst(list, not_default);
-//   EXPECT_EQ(lst.size(), list.size());
-//   EXPECT_EQ(lst.front(), "Karen");
-// }
+  ASSERT_EQ(lst.size(), from.size());
+  ASSERT_EQ(lst.front(), from.front());
+  ASSERT_EQ(lst.back(), from.back());
+}
 
-// TEST(ListTest, ctor_init_list_implicit) {
-//   sp::list<std::string> lst{
-//     "Karen",
-//     "Anastasia",
-//     "Alice",
-//     "Natalie",
-//     "Leyla",
-//     "Victoria"
-//   };
+TEST(ListTest, ctor_init_list) {
+  std::initializer_list<std::string> list{
+    "Karen",
+    "Anastasia",
+    "Alice",
+    "Natalie",
+    "Leyla",
+    "Victoria"
+  };
 
-//   EXPECT_EQ(lst.size(), 6);
-//   EXPECT_EQ(lst.front(), "Karen");
-// }
+  sp::list<std::string> lst(list);
+  ASSERT_EQ(lst.size(), list.size());
+  ASSERT_EQ(lst.front(), "Karen");
+}
 
-// TEST(ListTest, ctor_copy) {
-//   sp::size_t size = uid(gen);
-//   sp::list<safe> lst1(size, safe("not default"));
-//   sp::list<safe> lst2(lst1);
+TEST(ListTest, ctor_init_list_implicit) {
+  sp::list<std::string> lst{
+    "Karen",
+    "Anastasia",
+    "Alice",
+    "Natalie",
+    "Leyla",
+    "Victoria"
+  };
 
-//   EXPECT_EQ(lst1.size(), lst2.size());
-//   EXPECT_EQ(lst1.front(), lst2.front());
-//   EXPECT_EQ(lst1.back(), lst2.front());
-// }
+  ASSERT_EQ(lst.size(), 6);
+  ASSERT_EQ(lst.front(), "Karen");
+}
 
-// TEST(ListTest, ctor_move) {
-//   sp::size_t size = uid(gen);
-//   sp::list<safe> lst1(size, safe("not default"));
-//   sp::list<safe> lst2(std::move(lst1));
+TEST(ListTest, ctor_copy) {
+  sp::size_t size = uid(gen);
+  sp::list<safe> lst1(size, safe("not default"));
+  sp::list<safe> lst2(lst1);
 
-//   EXPECT_EQ(lst2.size(), size);
-//   EXPECT_EQ(lst2.front(), safe("not default"));
-//   EXPECT_EQ(lst2.back(), safe("not default"));
-// }
+  ASSERT_EQ(lst1.size(), lst2.size());
+  ASSERT_EQ(lst1.front(), lst2.front());
+  ASSERT_EQ(lst1.back(), lst2.front());
+}
+
+TEST(ListTest, ctor_move) {
+  sp::size_t size = uid(gen);
+  sp::list<safe> lst1(size, safe("not default"));
+  sp::list<safe> lst2(std::move(lst1));
+
+  ASSERT_EQ(lst2.size(), size);
+  ASSERT_EQ(lst2.front(), safe("not default"));
+  ASSERT_EQ(lst2.back(), safe("not default"));
+}
 
 // TEST(ListTest, ctor_move_alloc_not_default) {
 //   sp::size_t size = uid(gen);
 //   state_allocator<safe> not_default("not default");
-//   sp::list<safe, state_allocator<safe>> lst1(size, safe("not default"), state_allocator<safe>("default"));
-//   sp::list<safe, state_allocator<safe>> lst2(std::move(lst1), not_default);
+//   sp::list<safe, state_allocator<safe>> lst1(size, safe("not default"),
+//   state_allocator<safe>("default")); sp::list<safe, state_allocator<safe>>
+//   lst2(std::move(lst1), not_default);
 
-//   EXPECT_EQ(lst2.size(), size);
-//   EXPECT_EQ(lst2.front(), safe("not default"));
-//   EXPECT_EQ(lst2.back(), safe("not default"));
-//   // EXPECT_EQ(lst2.get_allocator(), not_default);
+//   ASSERT_EQ(lst2.size(), size);
+//   ASSERT_EQ(lst2.front(), safe("not default"));
+//   ASSERT_EQ(lst2.back(), safe("not default"));
+//   // ASSERT_EQ(lst2.get_allocator(), not_default);
 // }
 
 // TEST(ListTest, ctor_ass_copy) {
@@ -139,9 +143,9 @@ constexpr int loop = LOOP_COUNT;
 
 //   lst2 = lst1;
 
-//   EXPECT_EQ(lst1.size(), lst2.size());
-//   EXPECT_EQ(lst1.front(), lst2.front());
-//   EXPECT_EQ(lst1.back(), lst2.front());
+//   ASSERT_EQ(lst1.size(), lst2.size());
+//   ASSERT_EQ(lst1.front(), lst2.front());
+//   ASSERT_EQ(lst1.back(), lst2.front());
 // }
 
 // TEST(ListTest, ctor_ass_move) {
@@ -151,9 +155,9 @@ constexpr int loop = LOOP_COUNT;
 
 //   lst2 = std::move(lst1);
 
-//   EXPECT_EQ(lst2.size(), size);
-//   EXPECT_EQ(lst2.front(), safe("not default"));
-//   EXPECT_EQ(lst2.back(), safe("not default"));
+//   ASSERT_EQ(lst2.size(), size);
+//   ASSERT_EQ(lst2.front(), safe("not default"));
+//   ASSERT_EQ(lst2.back(), safe("not default"));
 // }
 
 // TEST(ListTest, comparison_1) {
@@ -161,45 +165,45 @@ constexpr int loop = LOOP_COUNT;
 //   sp::list<safe> lst1(size, safe("equal"));
 //   sp::list<safe> lst2(size, safe("equal"));
 
-//   EXPECT_TRUE(lst1 == lst2);
-//   EXPECT_FALSE(lst1 != lst2);
-//   EXPECT_TRUE(lst2 == lst1);
-//   EXPECT_FALSE(lst2 != lst1);
+//   ASSERT_TRUE(lst1 == lst2);
+//   ASSERT_FALSE(lst1 != lst2);
+//   ASSERT_TRUE(lst2 == lst1);
+//   ASSERT_FALSE(lst2 != lst1);
 // }
 
 // TEST(ListTest, comparison_2) {
 //   sp::list<safe> lst1(uid(gen), safe("not equal"));
 //   sp::list<safe> lst2(uid(gen), safe("equal"));
 
-//   EXPECT_FALSE(lst1 == lst2);
-//   EXPECT_TRUE(lst1 != lst2);
-//   EXPECT_FALSE(lst2 == lst1);
-//   EXPECT_TRUE(lst2 != lst1);
+//   ASSERT_FALSE(lst1 == lst2);
+//   ASSERT_TRUE(lst1 != lst2);
+//   ASSERT_FALSE(lst2 == lst1);
+//   ASSERT_TRUE(lst2 != lst1);
 // }
 
 // TEST(ListTest, comparison_3) {
 //   sp::list<safe> lst1(uid(gen), safe("not equal"));
 //   sp::list<safe> lst2;
 
-//   EXPECT_FALSE(lst1 == lst2);
-//   EXPECT_TRUE(lst1 != lst2);
-//   EXPECT_FALSE(lst2 == lst1);
-//   EXPECT_TRUE(lst2 != lst1);
+//   ASSERT_FALSE(lst1 == lst2);
+//   ASSERT_TRUE(lst1 != lst2);
+//   ASSERT_FALSE(lst2 == lst1);
+//   ASSERT_TRUE(lst2 != lst1);
 // }
 
 // TEST(ListTest, comparison_self) {
 //   sp::list<safe> lst(uid(gen), safe("not equal"));
 
-//   EXPECT_TRUE(lst == lst);
-//   EXPECT_FALSE(lst != lst);
+//   ASSERT_TRUE(lst == lst);
+//   ASSERT_FALSE(lst != lst);
 // }
 
 // TEST(ListTest, comparison_empty) {
 //   sp::list<safe> lst1;
 //   sp::list<safe> lst2;
 
-//   EXPECT_TRUE(lst1 == lst2);
-//   EXPECT_FALSE(lst1 != lst2);
+//   ASSERT_TRUE(lst1 == lst2);
+//   ASSERT_FALSE(lst1 != lst2);
 // }
 
 // TEST(ListTest, clear) {
@@ -207,7 +211,7 @@ constexpr int loop = LOOP_COUNT;
 //     sp::list<safe> lst(uid(gen), safe("dirty"));
 
 //     lst.clear();
-//     EXPECT_EQ(lst.size(), 0);
+//     ASSERT_EQ(lst.size(), 0);
 //   }
 // }
 
@@ -219,22 +223,22 @@ constexpr int loop = LOOP_COUNT;
 //     auto insert_pos = lst.begin();
 //     for (sp::size_t i = 0; i < pos; ++i, ++insert_pos) {};
 //     insert_pos = lst.insert(insert_pos, not_safe("inserted"));
-//     EXPECT_EQ(*insert_pos, not_safe("inserted"));
+//     ASSERT_EQ(*insert_pos, not_safe("inserted"));
 //   }
 // }
 
 // TEST(ListTest, insert_empty_movable) {
 //   sp::list<not_safe> lst;
 //   auto insert_pos = lst.insert(lst.begin(), not_safe("inserted"));
-//   EXPECT_EQ(insert_pos, lst.begin());
+//   ASSERT_EQ(insert_pos, lst.begin());
 // }
 
 // TEST(ListTest, insert_begin_movable) {
 //   sp::list<not_safe> lst(uid(gen), not_safe("default"));
 //   auto insert_pos = lst.insert(lst.begin(), not_safe("inserted"));
-//   EXPECT_EQ(*insert_pos, not_safe("inserted"));
-//   EXPECT_EQ(*lst.begin(), not_safe("inserted"));
-//   EXPECT_EQ(lst.begin(), insert_pos);
+//   ASSERT_EQ(*insert_pos, not_safe("inserted"));
+//   ASSERT_EQ(*lst.begin(), not_safe("inserted"));
+//   ASSERT_EQ(lst.begin(), insert_pos);
 // }
 
 // TEST(ListTest, stream) {
@@ -243,7 +247,7 @@ constexpr int loop = LOOP_COUNT;
 //       not_safe("Noel"),   not_safe("Grace"),
 //   };
 //   std::stringstream stream;
-//   std::string expected("Aileen Anna Louie Noel Grace");
+//   std::string ASSERTed("Aileen Anna Louie Noel Grace");
 //   stream << lst;
-//   EXPECT_EQ(expected, stream.str());
+//   ASSERT_EQ(ASSERTed, stream.str());
 // }

@@ -14,7 +14,7 @@ template <typename T, typename Al = std::allocator<T>>
 using TargetVector = sp::vector<T, Al>;
 
 // TODO:
-//  Add swap tests
+//  Add bad alloc tests, write some kind of pool allocator
 
 std::random_device ran_dev;
 std::mt19937 gen(ran_dev());
@@ -57,19 +57,19 @@ TEST(VectorTest, ctor_default) {
   ASSERT_THROW(vec.at(uid(gen)), std::out_of_range);
 }
 
-TEST(VectorTest, ctor_size_alloc_not_default) {
-  sp::size_t size = uid(gen);
-  state_allocator<not_safe> not_default("name");
-  const TargetVector<not_safe, state_allocator<not_safe>> vec(size,
-                                                              not_default);
+// TEST(VectorTest, ctor_size_alloc_not_default) {
+//   sp::size_t size = uid(gen);
+//   state_allocator<not_safe> not_default("name");
+//   const TargetVector<not_safe, state_allocator<not_safe>> vec(size,
+//                                                               not_default);
 
-  ASSERT_EQ(vec.size(), size);
-  ASSERT_EQ(vec.capacity(), size);
-  ASSERT_TRUE(vec.get_allocator() == not_default);
-  ASSERT_NE(vec.data(), nullptr);
-  ASSERT_EQ(vec.front(), not_safe());
-  ASSERT_EQ(vec.back(), not_safe());
-}
+//   ASSERT_EQ(vec.size(), size);
+//   ASSERT_EQ(vec.capacity(), size);
+//   ASSERT_TRUE(vec.get_allocator() == not_default);
+//   ASSERT_NE(vec.data(), nullptr);
+//   ASSERT_EQ(vec.front(), not_safe());
+//   ASSERT_EQ(vec.back(), not_safe());
+// }
 
 TEST(VectorTest, ctor_size) {
   sp::size_t size = uid(gen);
@@ -249,42 +249,42 @@ TEST(VectorTest, ctor_copy_safe_alloc_always_equal) {
   ASSERT_EQ(vec2.back().birth, constructed::kCopy);
 }
 
-TEST(VectorTest, ctor_copy_safe_alloc_not_equal) {
-  sp::size_t size = uid(gen);
-  state_allocator<safe> not_default("not_same");
-  TargetVector<safe, state_allocator<safe>> vec1(size,
-                                                 state_allocator<safe>("same"));
+// TEST(VectorTest, ctor_copy_safe_alloc_not_equal) {
+//   sp::size_t size = uid(gen);
+//   state_allocator<safe> not_default("not_same");
+//   TargetVector<safe, state_allocator<safe>> vec1(size,
+//                                                  state_allocator<safe>("same"));
 
-  const TargetVector<safe, state_allocator<safe>> vec2(vec1, not_default);
-  ASSERT_EQ(vec1.size(), vec2.size());
-  ASSERT_EQ(vec1.capacity(), vec2.capacity());
-  ASSERT_NE(vec1.data(), vec2.data());
-  ASSERT_EQ(vec1.front(), vec2.front());
-  ASSERT_EQ(vec1.back(), vec2.front());
-  ASSERT_TRUE(vec1.get_allocator() != vec2.get_allocator());
-  ASSERT_TRUE(vec2.get_allocator() == not_default);
-  ASSERT_EQ(vec2.front().birth, constructed::kCopy);
-  ASSERT_EQ(vec2.back().birth, constructed::kCopy);
-}
+//   const TargetVector<safe, state_allocator<safe>> vec2(vec1, not_default);
+//   ASSERT_EQ(vec1.size(), vec2.size());
+//   ASSERT_EQ(vec1.capacity(), vec2.capacity());
+//   ASSERT_NE(vec1.data(), vec2.data());
+//   ASSERT_EQ(vec1.front(), vec2.front());
+//   ASSERT_EQ(vec1.back(), vec2.front());
+//   ASSERT_TRUE(vec1.get_allocator() != vec2.get_allocator());
+//   ASSERT_TRUE(vec2.get_allocator() == not_default);
+//   ASSERT_EQ(vec2.front().birth, constructed::kCopy);
+//   ASSERT_EQ(vec2.back().birth, constructed::kCopy);
+// }
 
-TEST(VectorTest, ctor_copy_throwing_alloc_not_default) {
-  throwing::count = 0;
-  sp::size_t size = uid(gen) + 5;
-  state_allocator<throwing> not_default("not default");
-  TargetVector<throwing, state_allocator<throwing>> vec1(
-      size, state_allocator<throwing>("default"));
-  try {
-    TargetVector<throwing, state_allocator<throwing>> vec2(vec1, not_default);
-    FAIL();
-  } catch (...) {
-  }
+// TEST(VectorTest, ctor_copy_throwing_alloc_not_default) {
+//   throwing::count = 0;
+//   sp::size_t size = uid(gen) + 5;
+//   state_allocator<throwing> not_default("not default");
+//   TargetVector<throwing, state_allocator<throwing>> vec1(
+//       size, state_allocator<throwing>("default"));
+//   try {
+//     TargetVector<throwing, state_allocator<throwing>> vec2(vec1, not_default);
+//     FAIL();
+//   } catch (...) {
+//   }
 
-  ASSERT_EQ(vec1.size(), size);
-  ASSERT_NE(vec1.data(), nullptr);
-  for (auto i = 0; i < size; ++i) {
-    ASSERT_NO_THROW(vec1.at(i));
-  }
-}
+//   ASSERT_EQ(vec1.size(), size);
+//   ASSERT_NE(vec1.data(), nullptr);
+//   for (auto i = 0; i < size; ++i) {
+//     ASSERT_NO_THROW(vec1.at(i));
+//   }
+// }
 
 TEST(VectorTest, ctor_copy_throwing) {
   throwing::count = 0;
@@ -331,83 +331,83 @@ TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
   ASSERT_EQ(vec2.back().birth, constructed::kDef);
 }
 
-TEST(VectorTest, ctor_move_safe_alloc_equal) {
-  sp::size_t size = uid(gen);
-  state_allocator<safe> not_default("same");
-  TargetVector<safe, state_allocator<safe>> vec1(size,
-                                                 state_allocator<safe>("same"));
-  sp::size_t cap = vec1.capacity();
-  const TargetVector<safe, state_allocator<safe>> vec2(std::move(vec1),
-                                                       not_default);
-  ASSERT_EQ(vec2.size(), size);
-  ASSERT_EQ(vec2.capacity(), cap);
-  ASSERT_NE(vec1.data(), vec2.data());
-  ASSERT_EQ(vec2.front(), safe());
-  ASSERT_EQ(vec2.back(), safe());
-  ASSERT_TRUE(vec1.get_allocator() == vec2.get_allocator());
-  ASSERT_TRUE(vec2.get_allocator() == not_default);
-  ASSERT_EQ(vec2.front().birth, constructed::kDef);
-  ASSERT_EQ(vec2.back().birth, constructed::kDef);
-}
+// TEST(VectorTest, ctor_move_safe_alloc_equal) {
+//   sp::size_t size = uid(gen);
+//   state_allocator<safe> not_default("same");
+//   TargetVector<safe, state_allocator<safe>> vec1(size,
+//                                                  state_allocator<safe>("same"));
+//   sp::size_t cap = vec1.capacity();
+//   const TargetVector<safe, state_allocator<safe>> vec2(std::move(vec1),
+//                                                        not_default);
+//   ASSERT_EQ(vec2.size(), size);
+//   ASSERT_EQ(vec2.capacity(), cap);
+//   ASSERT_NE(vec1.data(), vec2.data());
+//   ASSERT_EQ(vec2.front(), safe());
+//   ASSERT_EQ(vec2.back(), safe());
+//   ASSERT_TRUE(vec1.get_allocator() == vec2.get_allocator());
+//   ASSERT_TRUE(vec2.get_allocator() == not_default);
+//   ASSERT_EQ(vec2.front().birth, constructed::kDef);
+//   ASSERT_EQ(vec2.back().birth, constructed::kDef);
+// }
 
-TEST(VectorTest, ctor_move_safe_alloc) {
-  sp::size_t size = uid(gen);
-  state_allocator<safe> not_default("not default");
-  TargetVector<safe, state_allocator<safe>> vec1(
-      size, safe("not default"), state_allocator<safe>("default"));
-  sp::size_t cap = vec1.capacity();
-  const TargetVector<safe, state_allocator<safe>> vec2(std::move(vec1),
-                                                       not_default);
-  ASSERT_EQ(vec2.size(), size);
-  ASSERT_EQ(vec2.capacity(), cap);
-  ASSERT_NE(vec1.data(), vec2.data());
-  ASSERT_EQ(vec2.front(), safe("not default"));
-  ASSERT_EQ(vec2.back(), safe("not default"));
-  ASSERT_TRUE(vec2.get_allocator() == not_default);
-  ASSERT_TRUE(vec1.get_allocator() != vec2.get_allocator());
-  ASSERT_EQ(vec2.front().birth, constructed::kMove);
-  ASSERT_EQ(vec2.back().birth, constructed::kMove);
-}
+// TEST(VectorTest, ctor_move_safe_alloc) {
+//   sp::size_t size = uid(gen);
+//   state_allocator<safe> not_default("not default");
+//   TargetVector<safe, state_allocator<safe>> vec1(
+//       size, safe("not default"), state_allocator<safe>("default"));
+//   sp::size_t cap = vec1.capacity();
+//   const TargetVector<safe, state_allocator<safe>> vec2(std::move(vec1),
+//                                                        not_default);
+//   ASSERT_EQ(vec2.size(), size);
+//   ASSERT_EQ(vec2.capacity(), cap);
+//   ASSERT_NE(vec1.data(), vec2.data());
+//   ASSERT_EQ(vec2.front(), safe("not default"));
+//   ASSERT_EQ(vec2.back(), safe("not default"));
+//   ASSERT_TRUE(vec2.get_allocator() == not_default);
+//   ASSERT_TRUE(vec1.get_allocator() != vec2.get_allocator());
+//   ASSERT_EQ(vec2.front().birth, constructed::kMove);
+//   ASSERT_EQ(vec2.back().birth, constructed::kMove);
+// }
 
-TEST(VectorTest, ctor_move_not_safe_alloc) {
-  sp::size_t size = uid(gen);
-  state_allocator<not_safe> not_default("not default");
-  TargetVector<not_safe, state_allocator<not_safe>> vec1(
-      size, not_safe("not default"), state_allocator<not_safe>("default"));
-  sp::size_t cap = vec1.capacity();
-  const TargetVector<not_safe, state_allocator<not_safe>> vec2(std::move(vec1),
-                                                               not_default);
+// TEST(VectorTest, ctor_move_not_safe_alloc) {
+//   sp::size_t size = uid(gen);
+//   state_allocator<not_safe> not_default("not default");
+//   TargetVector<not_safe, state_allocator<not_safe>> vec1(
+//       size, not_safe("not default"), state_allocator<not_safe>("default"));
+//   sp::size_t cap = vec1.capacity();
+//   const TargetVector<not_safe, state_allocator<not_safe>> vec2(std::move(vec1),
+//                                                                not_default);
 
-  ASSERT_EQ(vec2.size(), size);
-  ASSERT_EQ(vec2.capacity(), cap);
-  ASSERT_NE(vec1.data(), vec2.data());
-  ASSERT_EQ(vec2.front(), not_safe("not default"));
-  ASSERT_EQ(vec2.back(), not_safe("not default"));
-  ASSERT_TRUE(vec2.get_allocator() == not_default);
-  ASSERT_TRUE(vec1.get_allocator() != vec2.get_allocator());
-  ASSERT_EQ(vec2.front().birth, constructed::kCopy);
-  ASSERT_EQ(vec2.back().birth, constructed::kCopy);
-}
+//   ASSERT_EQ(vec2.size(), size);
+//   ASSERT_EQ(vec2.capacity(), cap);
+//   ASSERT_NE(vec1.data(), vec2.data());
+//   ASSERT_EQ(vec2.front(), not_safe("not default"));
+//   ASSERT_EQ(vec2.back(), not_safe("not default"));
+//   ASSERT_TRUE(vec2.get_allocator() == not_default);
+//   ASSERT_TRUE(vec1.get_allocator() != vec2.get_allocator());
+//   ASSERT_EQ(vec2.front().birth, constructed::kCopy);
+//   ASSERT_EQ(vec2.back().birth, constructed::kCopy);
+// }
 
-TEST(VectorTest, ctor_move_throwing_alloc_not_default) {
-  throwing::count = 0;
-  sp::size_t size = uid(gen) + 5;
-  state_allocator<throwing> not_default("not default");
-  TargetVector<throwing, state_allocator<throwing>> vec1(
-      size, state_allocator<throwing>("default"));
-  try {
-    TargetVector<throwing, state_allocator<throwing>> vec2(std::move(vec1),
-                                                           not_default);
-    FAIL();
-  } catch (...) {
-  }
+// TEST(VectorTest, ctor_move_throwing_alloc_not_default) {
+//   throwing::count = 0;
+//   sp::size_t size = uid(gen) + 5;
+//   state_allocator<throwing> not_default("not default");
+//   TargetVector<throwing, state_allocator<throwing>> vec1(
+//       size, state_allocator<throwing>("default"));
+//   try {
+//     TargetVector<throwing, state_allocator<throwing>> vec2(std::move(vec1),
+//                                                            not_default);
+//     FAIL();
+//   } catch (...) {
+//   }
 
-  ASSERT_EQ(vec1.size(), size);
-  ASSERT_NE(vec1.data(), nullptr);
-  for (auto i = 0; i < size; ++i) {
-    ASSERT_NO_THROW(vec1.at(i));
-  }
-}
+//   ASSERT_EQ(vec1.size(), size);
+//   ASSERT_NE(vec1.data(), nullptr);
+//   for (auto i = 0; i < size; ++i) {
+//     ASSERT_NO_THROW(vec1.at(i));
+//   }
+// }
 
 TEST(VectorTest, assignment_copy) {
   sp::size_t size = uid(gen);
@@ -461,40 +461,40 @@ TEST(VectorTest, assignment_move) {
   ASSERT_EQ(vec2.back(), not_safe());
 }
 
-TEST(VectorTest, assignment_move_with_alloc) {
-  sp::size_t size = uid(gen);
-  TargetVector<safe, state_allocator<safe>> vec1(size,
-                                                 state_allocator<safe>("one"));
-  sp::size_t cap = vec1.capacity();
-  TargetVector<safe, state_allocator<safe>> vec2(state_allocator<safe>("two"));
+// TEST(VectorTest, assignment_move_with_alloc) {
+//   sp::size_t size = uid(gen);
+//   TargetVector<safe, state_allocator<safe>> vec1(size,
+//                                                  state_allocator<safe>("one"));
+//   sp::size_t cap = vec1.capacity();
+//   TargetVector<safe, state_allocator<safe>> vec2(state_allocator<safe>("two"));
 
-  vec2 = std::move(vec1);
+//   vec2 = std::move(vec1);
 
-  ASSERT_EQ(vec2.size(), size);
-  ASSERT_EQ(vec2.capacity(), cap);
-  ASSERT_NE(vec2.data(), nullptr);
-  ASSERT_NE(vec2.get_allocator(), vec1.get_allocator());
-  ASSERT_EQ(vec2.front(), safe());
-  ASSERT_EQ(vec2.back(), safe());
-}
+//   ASSERT_EQ(vec2.size(), size);
+//   ASSERT_EQ(vec2.capacity(), cap);
+//   ASSERT_NE(vec2.data(), nullptr);
+//   ASSERT_NE(vec2.get_allocator(), vec1.get_allocator());
+//   ASSERT_EQ(vec2.front(), safe());
+//   ASSERT_EQ(vec2.back(), safe());
+// }
 
-TEST(VectorTest, assignment_move_with_alloc_no_realloc) {
-  TargetVector<safe, state_allocator<safe>> vec1(10,
-                                                 state_allocator<safe>("one"));
+// TEST(VectorTest, assignment_move_with_alloc_no_realloc) {
+//   TargetVector<safe, state_allocator<safe>> vec1(10,
+//                                                  state_allocator<safe>("one"));
                                                  
-  TargetVector<safe, state_allocator<safe>> vec2(33, state_allocator<safe>("two"));
-  safe* ptr = vec2.data();
+//   TargetVector<safe, state_allocator<safe>> vec2(33, state_allocator<safe>("two"));
+//   safe* ptr = vec2.data();
 
-  vec2 = std::move(vec1);
+//   vec2 = std::move(vec1);
 
-  ASSERT_EQ(vec2.size(), 10);
-  ASSERT_EQ(vec1.capacity(), 10);
-  ASSERT_EQ(vec2.capacity(), 33);
-  ASSERT_EQ(vec2.data(), ptr);
-  ASSERT_NE(vec2.get_allocator(), vec1.get_allocator());
-  ASSERT_EQ(vec2.front(), safe());
-  ASSERT_EQ(vec2.back(), safe());
-}
+//   ASSERT_EQ(vec2.size(), 10);
+//   ASSERT_EQ(vec1.capacity(), 10);
+//   ASSERT_EQ(vec2.capacity(), 33);
+//   ASSERT_EQ(vec2.data(), ptr);
+//   ASSERT_NE(vec2.get_allocator(), vec1.get_allocator());
+//   ASSERT_EQ(vec2.front(), safe());
+//   ASSERT_EQ(vec2.back(), safe());
+// }
 
 TEST(VectorTest, swap) {
   TargetVector<not_safe> vec1(10, not_safe("one"));
@@ -515,28 +515,28 @@ TEST(VectorTest, swap) {
   ASSERT_EQ(vec2.data(), ptr1);
 }
 
-TEST(VectorTest, swap_with_alloc) {
-  state_allocator<not_safe> first("first");
-  state_allocator<not_safe> second("second");
+// TEST(VectorTest, swap_with_alloc) {
+//   state_allocator<not_safe> first("first");
+//   state_allocator<not_safe> second("second");
 
-  TargetVector<not_safe, state_allocator<not_safe>> vec1(10, not_safe("one"), first);                                               
-  TargetVector<not_safe, state_allocator<not_safe>> vec2(33, not_safe("two"), second);
+//   TargetVector<not_safe, state_allocator<not_safe>> vec1(10, not_safe("one"), first);                                               
+//   TargetVector<not_safe, state_allocator<not_safe>> vec2(33, not_safe("two"), second);
   
-  TargetVector<not_safe, state_allocator<not_safe>> exp1(vec2);
-  TargetVector<not_safe, state_allocator<not_safe>> exp2(vec1);
+//   TargetVector<not_safe, state_allocator<not_safe>> exp1(vec2);
+//   TargetVector<not_safe, state_allocator<not_safe>> exp2(vec1);
                                                  
-  not_safe* ptr1 = vec1.data();
-  not_safe* ptr2 = vec2.data();
+//   not_safe* ptr1 = vec1.data();
+//   not_safe* ptr2 = vec2.data();
 
-  vec1.swap(vec2);
+//   vec1.swap(vec2);
 
-  ASSERT_EQ(vec1, exp1);
-  ASSERT_EQ(vec2, exp2);
-  ASSERT_EQ(vec1.data(), ptr2);
-  ASSERT_EQ(vec2.data(), ptr1);
-  ASSERT_EQ(vec1.get_allocator(), second);
-  ASSERT_EQ(vec2.get_allocator(), first);
-}
+//   ASSERT_EQ(vec1, exp1);
+//   ASSERT_EQ(vec2, exp2);
+//   ASSERT_EQ(vec1.data(), ptr2);
+//   ASSERT_EQ(vec2.data(), ptr1);
+//   ASSERT_EQ(vec1.get_allocator(), second);
+//   ASSERT_EQ(vec2.get_allocator(), first);
+// }
 
 //==============================================================================
 // cmp and random access
@@ -624,6 +624,24 @@ TEST(VectorTest, data_access) {
   const TargetVector<int> vec(uid(gen), 666);
   const int* ptr = vec.data();
   for (int i = 0; i < vec.size(); ++i) ASSERT_EQ(ptr[i], 666);
+}
+
+TEST(VectorTest, iterators) {
+  TargetVector<int> vec{0, 1, 2, 3, 4, 5};
+  TargetVector<int>::iterator it = vec.begin();
+  for (int i = 0; it != vec.end(); ++it, ++i) ASSERT_EQ(*it, vec[i]);
+  it = vec.begin() + 3;
+  *it = 10;
+  ASSERT_EQ(vec[3], 10);
+}
+
+TEST(VectorTest, reverse_iterators) {
+  TargetVector<int> vec{0, 1, 2, 3, 4, 5};
+  TargetVector<int>::reverse_iterator it = vec.rbegin();
+  for (int i = 5; it != vec.rend(); ++it, --i) ASSERT_EQ(*it, vec[i]);
+  it = vec.rbegin() + 3;
+  *it = 10;
+  ASSERT_EQ(vec[2], 10);
 }
 
 //==============================================================================

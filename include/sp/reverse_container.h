@@ -4,14 +4,14 @@
 #include "reverse_iterator.h"
 
 template <typename Iterable>
-struct reversed_container {
+struct reverse_container {
   using iterator = Iterable::reverse_iterator;
   using const_iterator = Iterable::const_reverse_iterator;
 
   using reverse_iterator = Iterable::iterator;
   using reverse_const_iterator = Iterable::const_iterator;
 
-  constexpr reversed_container(Iterable& container) noexcept
+  constexpr reverse_container(Iterable& container) noexcept
       : iterable(container) {}
 
   constexpr iterator begin() { return iterable.rbegin(); }
@@ -34,7 +34,7 @@ struct reversed_container {
 };
 
 template <typename T>
-constexpr reversed_container<T> reverse(T&& iterable) noexcept {
+constexpr reverse_container<T> reverse(T&& iterable) noexcept {
   return {iterable};
 }
 

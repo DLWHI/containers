@@ -7,18 +7,17 @@ namespace sp {
 
 using diff_t = int64_t;
 
-// T - node type
 // Container - is not used inside of class, but allows different containers
 //             with same template type produce different iterators
-template <typename T, typename Container>
+template <typename T, typename Node, typename Container>
 class node_iterator {
  public:
   using iterator_category = std::bidirectional_iterator_tag;
   using node_type = T;
-  using value_type = typename T::value_type;
-  using pointer = typename T::pointer;
-  using reference = typename T::reference;
-  using diff_t = int64_t;
+  using value_type = typename Container::value_type;
+  using pointer = typename Container::pointer;
+  using reference = typename Container::reference;
+  using diff_t = sp::diff_t;
   using difference_type = diff_t;
 
   constexpr node_iterator() noexcept : node_(nullptr){};

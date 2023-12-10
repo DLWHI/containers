@@ -1,23 +1,32 @@
 #ifndef SP_CONTAINERS_POINTER_ITERATOR_H_
 #define SP_CONTAINERS_POINTER_ITERATOR_H_
-#include <iterator>
 #include <cstdint>
+#include <iterator>
+#include <type_traits>
 
 namespace sp {
 
 using diff_t = int64_t;
 
-// T - pointer type
 // Container - is not used inside of class, but allows different containers
 //             with same template type produce different iterators
+// If std::is_same<T, Container>::value evaluates to false the program has
+// undefined behavior
+// No general requirements on template types.
 template <typename T, typename Container>
 class pointer_iterator {
+  static_assert(
+      std::is_same<
+          typename std::remove_cv<T>::type,
+          typename std::remove_cv<typename Container::value_type>::type>::value,
+      "Container::value_type and T must have same types");
+
  public:
   using iterator_category = std::random_access_iterator_tag;
   using value_type = T;
   using pointer = T*;
   using reference = T&;
-  using diff_t = int64_t;
+  using diff_t = sp::diff_t;
   using difference_type = diff_t;
 
   constexpr pointer_iterator() noexcept : ptr_(nullptr){};
@@ -75,8 +84,12 @@ class pointer_iterator {
     return *this;
   }
 
-  constexpr pointer_iterator operator++(int) noexcept { return pointer_iterator(ptr_++); }
-  constexpr pointer_iterator operator--(int) noexcept { return pointer_iterator(ptr_--); }
+  constexpr pointer_iterator operator++(int) noexcept {
+    return pointer_iterator(ptr_++);
+  }
+  constexpr pointer_iterator operator--(int) noexcept {
+    return pointer_iterator(ptr_--);
+  }
 
   constexpr pointer_iterator& operator++() noexcept {
     ++ptr_;
@@ -88,9 +101,7 @@ class pointer_iterator {
     return *this;
   }
 
-  constexpr T operator[](diff_t delta) noexcept {
-    return *(ptr_ + delta);
-  }
+  constexpr T operator[](diff_t delta) noexcept { return *(ptr_ + delta); }
 
   constexpr operator pointer_iterator<const T, Container>() const noexcept {
     return pointer_iterator<const T, Container>(ptr_);
@@ -99,5 +110,5 @@ class pointer_iterator {
  protected:
   T* ptr_;
 };
-}  // namespace s21
+}  // namespace sp
 #endif  // SP_CONTAINERS_POINTER_ITERATOR_H_
