@@ -15,7 +15,7 @@ std::mt19937 gen(ran_dev());
 #ifdef MAX_SIZE
 std::uniform_int_distribution<dstd::size_t> uid(1, MAX_SIZE);
 #else
-std::uniform_int_distribution<sp::size_t> uid(1, 100);
+std::uniform_int_distribution<int64_t> uid(1, 100);
 #endif
 
 #ifdef LOOP_COUNT
@@ -31,7 +31,7 @@ TEST(ListTest, ctor_default) {
 }
 
 // TEST(ListTest, ctor_size_alloc_not_default) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<safe> not_default;
 //   TargetList<safe, state_allocator<safe>> lst(size, not_default);
 
@@ -44,7 +44,7 @@ TEST(ListTest, ctor_default) {
 // }
 
 TEST(ListTest, ctor_size) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetList<safe> lst(size, safe("lst"));
   ASSERT_EQ(lst.size(), size);
   ASSERT_FALSE(lst.empty());
@@ -53,7 +53,7 @@ TEST(ListTest, ctor_size) {
 }
 
 TEST(ListTest, ctor_size_value) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
 
   const sp::list<safe> lst(size, safe("not defult"));
   ASSERT_EQ(lst.size(), size);
@@ -63,7 +63,7 @@ TEST(ListTest, ctor_size_value) {
 }
 
 TEST(ListTest, ctor_from_stl_list) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
 
   std::list<safe> from(size, safe("not default"));
 
@@ -104,7 +104,7 @@ TEST(ListTest, ctor_init_list_implicit) {
 }
 
 TEST(ListTest, ctor_copy) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   sp::list<safe> lst1(size, safe("not default"));
   sp::list<safe> lst2(lst1);
 
@@ -114,7 +114,7 @@ TEST(ListTest, ctor_copy) {
 }
 
 TEST(ListTest, ctor_move) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   sp::list<safe> lst1(size, safe("not default"));
   sp::list<safe> lst2(std::move(lst1));
 
@@ -124,7 +124,7 @@ TEST(ListTest, ctor_move) {
 }
 
 // TEST(ListTest, ctor_move_alloc_not_default) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<safe> not_default("not default");
 //   sp::list<safe, state_allocator<safe>> lst1(size, safe("not default"),
 //   state_allocator<safe>("default")); sp::list<safe, state_allocator<safe>>
@@ -137,7 +137,7 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, ctor_ass_copy) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   sp::list<safe> lst1(size, safe("not default"));
 //   sp::list<safe> lst2;
 
@@ -149,7 +149,7 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, ctor_ass_move) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   sp::list<safe> lst1(size, safe("not default"));
 //   sp::list<safe> lst2;
 
@@ -161,7 +161,7 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, comparison_1) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   sp::list<safe> lst1(size, safe("equal"));
 //   sp::list<safe> lst2(size, safe("equal"));
 
@@ -218,10 +218,10 @@ TEST(ListTest, ctor_move) {
 // TEST(ListTest, insert_movable) {
 //   for (int i = 0; i < loop; i++) {
 //     sp::list<not_safe> lst(uid(gen), not_safe("default"));
-//     std::uniform_int_distribution<sp::size_t> uid_lst(0, lst.size());
-//     sp::size_t pos = uid_lst(gen);
+//     std::uniform_int_distribution<int64_t> uid_lst(0, lst.size());
+//     int64_t pos = uid_lst(gen);
 //     auto insert_pos = lst.begin();
-//     for (sp::size_t i = 0; i < pos; ++i, ++insert_pos) {};
+//     for (int64_t i = 0; i < pos; ++i, ++insert_pos) {};
 //     insert_pos = lst.insert(insert_pos, not_safe("inserted"));
 //     ASSERT_EQ(*insert_pos, not_safe("inserted"));
 //   }

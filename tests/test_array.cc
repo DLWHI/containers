@@ -4,7 +4,7 @@
 #include <random>
 #include <sstream>
 
-template <typename T, sp::size_t N>
+template <typename T, int64_t N>
 using TargetArray = sp::array<T, N>;
 
 constexpr int constexpr_check(int val) {
@@ -161,7 +161,7 @@ TEST(ArrayTest, to_array) {
 TEST(ArrayTest, to_array_custom_order) {
   auto arr =
       sp::to_array({1, 2, 3, 4, 5, 6, 7},
-                   std::integer_sequence<sp::size_t, 6, 5, 4, 3, 2, 1, 0>{});
+                   std::integer_sequence<int64_t, 6, 5, 4, 3, 2, 1, 0>{});
 
   for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], 7 - i);
 }
@@ -169,7 +169,7 @@ TEST(ArrayTest, to_array_custom_order) {
 TEST(ArrayTest, to_array_copy) {
   auto arr =
       sp::to_array({1, 2, 3, 4, 5, 6, 7},
-                   std::integer_sequence<sp::size_t, 6, 6, 6, 6, 6, 6, 6>{});
+                   std::integer_sequence<int64_t, 6, 6, 6, 6, 6, 6, 6>{});
 
   for (int i = 0; i < arr.size(); i++) ASSERT_EQ(arr[i], 7);
 }

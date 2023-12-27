@@ -1,19 +1,16 @@
 #ifndef SP_CONTAINERS_ARRAY_H_
 #define SP_CONTAINERS_ARRAY_H_
 
-#include <algorithm>
-#include <cstdint>
-#include <ostream>
-#include <stdexcept>
-#include <type_traits>
+#include <cstdint>  // int64_t
+#include <ostream>  // operator<<
+#include <stdexcept>  // exceptions
+#include <utility>  // std::forward, std::move, std::swap
+#include <type_traits>  // as name suggests
 
-#include "pointer_iterator.h"
-#include "reverse_iterator.h"
+#include <sp/pointer_iterator.h> // iterator and std::distance
+#include <sp/reverse_iterator.h>
 
 namespace sp {
-
-using size_t = int64_t;
-
 // Requires N >= 0 (UB otherwise)
 // Relies on implicitly declared ctor so thus implies:
 //  Copy ctor/assignment operator requiers T to be
@@ -21,27 +18,27 @@ using size_t = int64_t;
 //  Move ctor/assignment operator requiers T to be
 //    MoveConstructible and MoveAssignable respectively
 // Other methods have no requirements on type T
-template <typename T, sp::size_t N>
+template <typename T, int64_t N>
 struct array {
   using value_type = T;
   using pointer = T*;
   using const_pointer = const T*;
   using reference = T&;
   using const_reference = const T&;
-  using size_t = int64_t;
+  using size_type = int64_t;
 
   using iterator = sp::pointer_iterator<T, array>;
   using const_iterator = sp::pointer_iterator<const T, array>;
   using reverse_iterator = sp::reverse_iterator<iterator>;
   using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
 
-  constexpr reference at(size_t pos) {
+  constexpr reference at(size_type pos) {
     return (0 <= pos && pos < N)
                ? elements[pos]
                : throw std::out_of_range("Accessing element out of bounds");
   }
 
-  constexpr const_reference at(size_t pos) const {
+  constexpr const_reference at(size_type pos) const {
     return (0 <= pos && pos < N)
                ? elements[pos]
                : throw std::out_of_range("Accessing element out of bounds");
@@ -56,8 +53,8 @@ struct array {
   constexpr const_pointer data() const noexcept { return elements; }
 
   constexpr bool empty() const noexcept { return false; }
-  constexpr size_t size() const noexcept { return N; }
-  constexpr size_t max_size() const noexcept { return N; }
+  constexpr size_type size() const noexcept { return N; }
+  constexpr size_type max_size() const noexcept { return N; }
 
   constexpr iterator begin() noexcept { return iterator(elements); }
   constexpr const_iterator begin() const noexcept { return cbegin(); }
@@ -87,26 +84,28 @@ struct array {
 
   constexpr void fill(const_reference value) noexcept(
       std::is_nothrow_copy_assignable<T>::value) {
-    for (size_t i = 0; i < N; ++i) {
+    for (size_type i = 0; i < N; ++i) {
       elements[i] = value;
     }
   }
 
   constexpr void swap(array& other) noexcept(
       std::is_nothrow_swappable<T>::value) {
-    std::swap_ranges(elements, elements + size(), other.elements);
+    for (size_type i = 0; i < N; ++i) {
+      std::swap(elements[i], other.elements[i]);
+    }
   }
 
-  constexpr reference operator[](size_t i) { return elements[i]; }
-  constexpr const_reference operator[](size_t i) const { return elements[i]; }
+  constexpr reference operator[](size_type i) { return elements[i]; }
+  constexpr const_reference operator[](size_type i) const { return elements[i]; }
   constexpr bool operator==(const array& other) const {
-    for (size_t i = 0; i < N; ++i)
+    for (size_type i = 0; i < N; ++i)
       if (elements[i] != other.elements[i]) return false;
     return true;
   }
 
   friend std::ostream& operator<<(std::ostream& os, const array& array) {
-    for (size_t i = 0; i < N - 1; ++i) os << array.elements[i] << ' ';
+    for (size_type i = 0; i < N - 1; ++i) os << array.elements[i] << ' ';
     os << array.elements[N - 1];
     return os;
   }
@@ -121,14 +120,14 @@ struct array<T, 0> {
   using const_pointer = const T*;
   using reference = T&;
   using const_reference = const T&;
-  using size_t = int64_t;
+  using size_type = int64_t;
 
   using iterator = sp::pointer_iterator<T, array>;
   using const_iterator = sp::pointer_iterator<const T, array>;
   using reverse_iterator = sp::reverse_iterator<iterator>;
   using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
 
-  constexpr const_reference at(size_t pos) const {
+  constexpr const_reference at(size_type pos) const {
     (void)pos;
     throw std::out_of_range("Accessing element out of bounds");
   }
@@ -138,8 +137,8 @@ struct array<T, 0> {
   constexpr const_pointer data() const noexcept { return nullptr; }
 
   constexpr bool empty() const noexcept { return true; }
-  constexpr size_t size() const noexcept { return 0; }
-  constexpr size_t max_size() const noexcept { return 0; }
+  constexpr size_type size() const noexcept { return 0; }
+  constexpr size_type max_size() const noexcept { return 0; }
 
   constexpr iterator begin() noexcept { return iterator(nullptr); }
   constexpr const_iterator begin() const noexcept { return cbegin(); }
@@ -171,11 +170,11 @@ struct array<T, 0> {
 
   constexpr void swap(array& other) noexcept { (void)other; }
 
-  constexpr reference operator[](size_t i) {
+  constexpr reference operator[](size_type i) {
     (void)i;
     return *begin();
   }
-  constexpr const_reference operator[](size_t i) const {
+  constexpr const_reference operator[](size_type i) const {
     (void)i;
     return *begin();
   }
@@ -191,28 +190,28 @@ struct array<T, 0> {
   }
 };
 
-template <class T, sp::size_t N, sp::size_t... Order>
+template <class T, int64_t N, int64_t... Order>
 constexpr sp::array<typename std::remove_cv<T>::type, N> to_array(
-    T (&a)[N], std::integer_sequence<sp::size_t, Order...>) {
+    T (&a)[N], std::integer_sequence<int64_t, Order...>) {
   static_assert(N == sizeof...(Order), "Sequence must have same lenght as array");
   return {{a[Order]...}};
 }
 
-template <class T, sp::size_t N>
+template <class T, int64_t N>
 constexpr sp::array<typename std::remove_cv<T>::type, N> to_array(T (&a)[N]) {
-  return to_array(a, std::make_integer_sequence<sp::size_t, N>{});
+  return to_array(a, std::make_integer_sequence<int64_t, N>{});
 }
 
-template <class T, sp::size_t N, sp::size_t... Order>
+template <class T, int64_t N, int64_t... Order>
 constexpr sp::array<typename std::remove_cv<T>::type, N> to_array(
-    T (&&a)[N], std::integer_sequence<sp::size_t, Order...>) {
+    T (&&a)[N], std::integer_sequence<int64_t, Order...>) {
   static_assert(N == sizeof...(Order), "Sequence must have same lenght as array");
   return {{std::move(a[Order])...}};
 }
 
-template <class T, sp::size_t N>
+template <class T, int64_t N>
 constexpr sp::array<typename std::remove_cv<T>::type, N> to_array(T (&&a)[N]) {
-  return to_array(std::move(a), std::make_integer_sequence<sp::size_t, N>{});
+  return to_array(std::move(a), std::make_integer_sequence<int64_t, N>{});
 }
 
 }  // namespace sp

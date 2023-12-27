@@ -9,13 +9,10 @@
 #include <type_traits>
 #include <utility>
 
-#include "node_iterator.h"
-#include "reverse_iterator.h"
+#include <sp/node_iterator.h>
+#include <sp/reverse_iterator.h>
 
 namespace sp {
-
-using size_t = int64_t;
-
 template <typename T, typename Allocator = std::allocator<T>>
 class list {
   struct Node;
@@ -35,7 +32,7 @@ class list {
   using reference = T&;
   using const_reference = const T&;
   using move_reference = T&&;
-  using size_t = sp::size_t;
+  using size_type = int64_t;
 
   using allocator_type = Allocator;
   using al_traits = std::allocator_traits<allocator_type>;
@@ -51,12 +48,12 @@ class list {
   explicit list(const Allocator& al) noexcept
       : al_(static_cast<rebind_alloc>(al)), size_(0) {}
 
-  list(size_t count, const_reference val, const Allocator& al = Allocator())
+  list(size_type count, const_reference val, const Allocator& al = Allocator())
       : al_(static_cast<rebind_alloc>(al)), size_(count) {
     push_nodes(&head_, count, val);
   };
 
-  list(size_t count, const Allocator& al = Allocator())
+  list(size_type count, const Allocator& al = Allocator())
       : al_(static_cast<rebind_alloc>(al)), size_(count) {
     push_nodes(&head_, count);
   }
@@ -137,12 +134,12 @@ class list {
   const_iterator cend() const { return const_iterator(head_); }
 
   bool empty() const noexcept { return !size_; }
-  size_t max_size() const noexcept { return rebind_traits::max_size(al_); }
-  size_t size() const noexcept { return size_; }
+  size_type max_size() const noexcept { return rebind_traits::max_size(al_); }
+  size_type size() const noexcept { return size_; }
   //============================================================================
 
   bool integrity() const {
-    size_t count = 0;
+    size_type count = 0;
     Node* ptr = head_.next_node;
     for (; ptr != &head_; ptr = ptr->next_node) {
       ++count;
@@ -176,7 +173,7 @@ class list {
   //   return iterator(some);
   // }
 
-  // iterator insert(const_iterator pos, size_t count, const_reference value);
+  // iterator insert(const_iterator pos, size_type count, const_reference value);
 
   // template <typename InputIterator>
   // iterator insert(const_iterator first, InputIterator end, InputIterator
@@ -247,7 +244,7 @@ class list {
   // }
   // void reverse() {
   //   Node* ptr = head_.next_;
-  //   for (size_t i = 0; i < counter_; ++i) {
+  //   for (size_type i = 0; i < counter_; ++i) {
   //     insert(ptr, back());
   //     pop_back();
   //   }
@@ -290,9 +287,9 @@ class list {
 
   // // void FrontBackSplit(list &initial, list &a, list &b) {
   // //       iterator middle = initial.begin();
-  // //       size_t limit = (initial.counter_ % 2 > 0) ? initial.counter_ / 2 +
+  // //       size_type limit = (initial.counter_ % 2 > 0) ? initial.counter_ / 2 +
   // 1 : initial.counter_ / 2;
-  // //       size_t i = 0;
+  // //       size_type i = 0;
   // //       for (; i < limit; ++i) {
   // //           ++middle;
   // //           // middle = middle.ptr_->next;
@@ -399,8 +396,8 @@ class list {
   }
 
   template <typename... Args>
-  Node* push_nodes(Node* where, sp::size_t count, Args&&... args) {
-    for (size_t i = 0; i < count; ++i, where = where->next_node) {
+  Node* push_nodes(Node* where, sp::size_type count, Args&&... args) {
+    for (size_type i = 0; i < count; ++i, where = where->next_node) {
       ValueNode* some = al_.allocate(1);
       rebind_traits::construct(al_, some, std::forward<Args>(args)...);
       some->bind(where, &head_);
@@ -431,7 +428,7 @@ class list {
   }
 
   rebind_alloc al_;
-  size_t size_;
+  size_type size_;
   Node head_;
 };
 

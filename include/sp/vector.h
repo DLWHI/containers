@@ -1,19 +1,16 @@
 #ifndef SP_CONTAINERS_VECTOR_H_
 #define SP_CONTAINERS_VECTOR_H_
 
-#include <algorithm>
-#include <cstdint>
-#include <ostream>
-#include <stdexcept>
-#include <type_traits>
+#include <cstdint>      // int64_t
+#include <ostream>      // operator<<
+#include <stdexcept>    // exceptions
+#include <type_traits>  // as name suggests
+#include <utility>      // std::forward, std::swap, std::move
 
-#include "pointer_iterator.h"
-#include "reverse_iterator.h"
+#include <sp/pointer_iterator.h>  // iterator and std::distance
+#include <sp/reverse_iterator.h>
 
 namespace sp {
-
-using size_t = int64_t;
-
 // T type must meet requirements of Erasable
 // Allocator type must meet requirements of Allocator
 // Methods may have additional reuirements on types
@@ -27,7 +24,8 @@ class vector {
   using const_pointer = const T*;
   using reference = T&;
   using const_reference = const T&;
-  using size_t = sp::size_t;
+  using size_type = int64_t;
+  using difference_type = int64_t;
 
   using allocator_type = Allocator;
 
@@ -36,7 +34,7 @@ class vector {
   using reverse_iterator = sp::reverse_iterator<iterator>;
   using const_reverse_iterator = sp::reverse_iterator<const_iterator>;
 
-  static constexpr size_t kCapMul = 2;
+  static constexpr size_type kCapMul = 2;
 
   // T has no additional requirements
   // Allocator type must meet additional requirements of DefaultConstructible
@@ -49,13 +47,13 @@ class vector {
       : size_(0), al_(al), buf_(&al_) {}
 
   // T must meet additional requirements of DefaultInsertable into *this
-  constexpr explicit vector(size_t size, const Allocator& al = Allocator())
+  constexpr explicit vector(size_type size, const Allocator& al = Allocator())
       : size_(size), al_(al), buf_(size, &al_) {
     fill(buf_.ptr, size_);
   }
 
   // T must meet additional requirements of CopyInsertable into *this
-  constexpr explicit vector(size_t size, const_reference value,
+  constexpr explicit vector(size_type size, const_reference value,
                             const Allocator& al = Allocator())
       : size_(size), al_(al), buf_(size, &al_) {
     fill(buf_.ptr, size_, value);
@@ -142,7 +140,7 @@ class vector {
       } else {
         destroy_content(buf_.ptr + other.size_, size_ - other.size_);
       }
-      for (size_t i = 0; i < other.size_ && i < size_; ++i) {
+      for (size_type i = 0; i < other.size_ && i < size_; ++i) {
         buf_.ptr[i] = other.buf_.ptr[i];
       }
     }
@@ -169,7 +167,7 @@ class vector {
       move_from(buf_.ptr + size_, other.buf_.ptr + other.size_,
                 other.size_ - size_);
       destroy_content(buf_.ptr + other.size_, size_ - other.size_);
-      for (size_t i = 0; i < other.size_ && i < size_; ++i) {
+      for (size_type i = 0; i < other.size_ && i < size_; ++i) {
         buf_.ptr[i] = std::move(other.buf_.ptr[i]);
       }
     }
@@ -185,13 +183,13 @@ class vector {
 
   constexpr allocator_type get_allocator() const noexcept { return al_; }
 
-  constexpr reference at(size_t pos) {
+  constexpr reference at(size_type pos) {
     return (0 <= pos && pos < size_)
                ? buf_.ptr[pos]
                : throw std::out_of_range("Accessing element out of bounds");
   }
 
-  constexpr const_reference at(size_t pos) const {
+  constexpr const_reference at(size_type pos) const {
     return (0 <= pos && pos < size_)
                ? buf_.ptr[pos]
                : throw std::out_of_range("Accessing element out of bounds");
@@ -244,16 +242,16 @@ class vector {
   }
 
   constexpr bool empty() const noexcept { return !size_; }
-  constexpr size_t size() const noexcept { return size_; }
-  constexpr size_t capacity() const noexcept { return buf_.cap; }
-  constexpr size_t max_size() const noexcept {
+  constexpr size_type size() const noexcept { return size_; }
+  constexpr size_type capacity() const noexcept { return buf_.cap; }
+  constexpr size_type max_size() const noexcept {
     return al_traits::max_size(al_);
   }
   //============================================================================
 
   // T must meet additional requirement of CopyAssignable and
   //  CopyInsertable into *this
-  constexpr void assign(size_t count, const_reference value) {
+  constexpr void assign(size_type count, const_reference value) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid count provided");
     }
@@ -264,7 +262,7 @@ class vector {
       destroy_content(temp.ptr, size_);
       size_ = count;
     } else {
-      for (size_t i = 0; i < count && i < size_; ++i) {
+      for (size_type i = 0; i < count && i < size_; ++i) {
         buf_.ptr[i] = value;
       }
       move_end(count - size_, value);
@@ -276,7 +274,7 @@ class vector {
   //  and MoveInsertable if InputIterator does not satisfy ForwardIterator
   template <typename InputIterator>
   constexpr void assign(InputIterator first, InputIterator last) {
-    size_t count = std::distance(first, last);
+    size_type count = std::distance(first, last);
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid or too big range provided");
     }
@@ -286,7 +284,7 @@ class vector {
       buf_.swap(temp);
       destroy_content(temp.ptr, size_);
     } else {
-      for (size_t i = 0; i < count && i < size_; ++i, ++first) {
+      for (size_type i = 0; i < count && i < size_; ++i, ++first) {
         buf_.ptr[i] = *first;
       }
       if (first != last) {
@@ -304,7 +302,7 @@ class vector {
   }
 
   // T must meet additional requirements of MoveInsertable into *this
-  constexpr void reserve(size_t count) {
+  constexpr void reserve(size_type count) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid reserve space");
     } else if (count > buf_.cap) {
@@ -328,7 +326,7 @@ class vector {
 
   // T must meet additional requirements of
   //  MoveInsertable and DefaultInsertable into *this
-  constexpr void resize(size_t count) {
+  constexpr void resize(size_type count) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid count provided");
     }
@@ -352,7 +350,7 @@ class vector {
   }
 
   // T must meet additional requirements of CopyInsertable into *this
-  constexpr void resize(size_t count, const_reference value) {
+  constexpr void resize(size_type count, const_reference value) {
     if (count > max_size() || count < 0) {
       throw std::length_error("Invalid count provided");
     }
@@ -404,9 +402,9 @@ class vector {
 
   // T must meet additional requirements of CopyAssignable
   //   and CopyInsertable into *this
-  constexpr iterator insert(const_iterator pos, size_t count,
+  constexpr iterator insert(const_iterator pos, size_type count,
                             const_reference value) {
-    size_t ind = pos - begin();
+    size_type ind = pos - begin();
     if (size_ + count >= buf_.cap || !std::is_nothrow_swappable<T>::value) {
       pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_,
                           buf_.ptr);
@@ -433,8 +431,8 @@ class vector {
   //   MoveConstructible, EmplaceConstructible and MoveInsertable into *this
   template <typename InputIt>
   constexpr iterator insert(const_iterator pos, InputIt first, InputIt last) {
-    size_t ind = pos - begin();
-    size_t count = std::distance(first, last);
+    size_type ind = pos - begin();
+    size_type count = std::distance(first, last);
     if (count + size_ >= buf_.cap || !std::is_nothrow_swappable<T>::value) {
       pointer_buffer temp(std::max(kCapMul * buf_.cap, size_ + count), &al_,
                           buf_.ptr);
@@ -466,9 +464,9 @@ class vector {
   // T must meet additional requirements of MoveAssignable
   constexpr iterator erase(const_iterator pos) noexcept(
       std::is_nothrow_move_assignable<T>::value) {
-    size_t ind = pos - begin();
+    size_type ind = pos - begin();
     if constexpr (std::is_nothrow_move_assignable<T>::value) {
-      for (size_t i = ind; i < size_ - 1; ++i) {
+      for (size_type i = ind; i < size_ - 1; ++i) {
         buf_.ptr[i] = std::move(buf_.ptr[i + 1]);
       }
       al_traits::destroy(al_, buf_.ptr + size_ - 1);
@@ -485,11 +483,11 @@ class vector {
   // T must meet additional requirements of MoveAssignable
   constexpr iterator erase(const_iterator first, const_iterator last) noexcept(
       std::is_nothrow_move_assignable<T>::value) {
-    size_t start = first - begin();
-    size_t finish = last - begin();
-    size_t count = finish - start;
+    size_type start = first - begin();
+    size_type finish = last - begin();
+    size_type count = finish - start;
     if constexpr (std::is_nothrow_move_assignable<T>::value) {
-      for (size_t i = start; i < size_ - count; ++i) {
+      for (size_type i = start; i < size_ - count; ++i) {
         buf_.ptr[i] = std::move(buf_.ptr[i + count]);
       }
       destroy_content(buf_.ptr + size_ - count, count);
@@ -507,9 +505,9 @@ class vector {
   //  MoveAssignable and MoveInsertable into *this
   template <typename... Args>
   constexpr iterator emplace(const_iterator pos, Args&&... args) {
-    size_t ind = pos - begin();
+    size_type ind = pos - begin();
     if (size_ == buf_.cap || !std::is_nothrow_move_assignable<T>::value) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_t(1)), &al_,
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_type(1)), &al_,
                           buf_.ptr);
       al_traits::construct(al_, temp.ptr + ind, std::forward<Args>(args)...);
       try {
@@ -524,7 +522,7 @@ class vector {
       T emp(std::forward<Args>(args)...);
       al_traits::construct(al_, buf_.ptr + size_,
                            std::move(buf_.ptr[size_ - 1]));
-      for (size_t i = size_ - 1; i > ind; --i) {
+      for (size_type i = size_ - 1; i > ind; --i) {
         buf_.ptr[i] = std::move(buf_.ptr[i - 1]);
       }
       buf_.ptr[ind] = std::move(emp);
@@ -538,7 +536,7 @@ class vector {
   template <typename... Args>
   constexpr T& emplace_back(Args&&... args) {
     if (size_ >= buf_.cap) {
-      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_t(1)), &al_,
+      pointer_buffer temp(std::max(kCapMul * buf_.cap, size_type(1)), &al_,
                           buf_.ptr);
       al_traits::construct(al_, temp.ptr + size_, std::forward<Args>(args)...);
       try {
@@ -571,7 +569,7 @@ class vector {
   // T must meet additional requirements of EqualityComparable
   constexpr bool operator==(const vector& other) const noexcept {
     if (size_ != other.size_) return false;
-    for (size_t i = 0; i < size_; ++i)
+    for (size_type i = 0; i < size_; ++i)
       if (buf_.ptr[i] != other.buf_.ptr[i]) return false;
     return true;
   }
@@ -582,18 +580,18 @@ class vector {
   }
 
   // No additional requirements on types
-  constexpr reference operator[](size_t index) noexcept {
+  constexpr reference operator[](size_type index) noexcept {
     return buf_.ptr[index];
   }
 
   // No additional requirements on types
-  constexpr const_reference operator[](size_t index) const noexcept {
+  constexpr const_reference operator[](size_type index) const noexcept {
     return buf_.ptr[index];
   }
 
   // I guess os << T must be valid
   friend std::ostream& operator<<(std::ostream& os, const vector& vec) {
-    for (size_t i = 0; i < vec.size_ - 1; ++i) os << vec.buf_.ptr[i] << ' ';
+    for (size_type i = 0; i < vec.size_ - 1; ++i) os << vec.buf_.ptr[i] << ' ';
     os << vec.buf_.ptr[vec.size_ - 1];
     return os;
   }
@@ -602,7 +600,7 @@ class vector {
   struct pointer_buffer {
     constexpr explicit pointer_buffer(Allocator* al = nullptr)
         : alc(al), ptr(nullptr), cap(0) {}
-    constexpr pointer_buffer(size_t size, Allocator* al, pointer hint = nullptr)
+    constexpr pointer_buffer(size_type size, Allocator* al, pointer hint = nullptr)
         : alc(al), cap(size) {
       if (cap < 0) {
         throw std::invalid_argument("Invalid memory buffer length");
@@ -628,13 +626,13 @@ class vector {
 
     Allocator* alc;
     pointer ptr;
-    size_t cap;
+    size_type cap;
   };
 
   template <typename... Args>
-  constexpr void fill(pointer arr, size_t count, Args&&... args) noexcept(
+  constexpr void fill(pointer arr, size_type count, Args&&... args) noexcept(
       std::is_nothrow_constructible<T, Args...>::value) {
-    size_t i = 0;
+    size_type i = 0;
     try {
       for (; i < count; ++i) {
         al_traits::construct(al_, arr + i, std::forward<Args>(args)...);
@@ -659,9 +657,9 @@ class vector {
     }
   }
 
-  constexpr void move_from(pointer dest, pointer source, size_t count) noexcept(
+  constexpr void move_from(pointer dest, pointer source, size_type count) noexcept(
       std::is_nothrow_move_constructible<T>::value) {
-    size_t i = 0;
+    size_type i = 0;
     if constexpr (std::is_nothrow_move_constructible<T>::value) {
       for (; i < count; ++i)
         al_traits::construct(al_, dest + i, std::move(source[i]));
@@ -675,7 +673,7 @@ class vector {
     }
   }
 
-  constexpr void resize_buffer(size_t n_size) {
+  constexpr void resize_buffer(size_type n_size) {
     pointer_buffer temp(n_size, &al_);
     move_from(temp.ptr, buf_.ptr, size_);
     buf_.swap(temp);
@@ -683,7 +681,7 @@ class vector {
   }
 
   template <typename... Args>
-  constexpr void move_end(size_t offset, Args&&... append_args) {
+  constexpr void move_end(size_type offset, Args&&... append_args) {
     if (offset < 0) {
       destroy_content(buf_.ptr + size_ + offset, -offset);
     } else {
@@ -692,9 +690,9 @@ class vector {
     size_ += offset;
   }
 
-  constexpr void split_buffer(pointer dest, size_t ind, size_t offset) noexcept(
+  constexpr void split_buffer(pointer dest, size_type ind, size_type offset) noexcept(
       std::is_nothrow_move_constructible<T>::value) {
-    size_t lim = std::min(ind, ind + offset);
+    size_type lim = std::min(ind, ind + offset);
     move_from(dest, buf_.ptr, lim);
     try {
       move_from(dest + ind + offset, buf_.ptr + ind, size_ - ind);
@@ -704,14 +702,14 @@ class vector {
     }
   }
 
-  constexpr void destroy_content(pointer ptr, size_t count) noexcept(
+  constexpr void destroy_content(pointer ptr, size_type count) noexcept(
       std::is_nothrow_destructible<T>::value) {
     for (; count; --count) {
       al_traits::destroy(al_, ptr + count - 1);
     }
   }
 
-  size_t size_;
+  size_type size_;
   allocator_type al_;
   pointer_buffer buf_;
 };

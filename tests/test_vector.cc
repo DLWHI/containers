@@ -20,9 +20,9 @@ std::random_device ran_dev;
 std::mt19937 gen(ran_dev());
 
 #ifdef MAX_SIZE
-std::uniform_int_distribution<sp::size_t> uid(1, MAX_SIZE);
+std::uniform_int_distribution<int64_t> uid(1, MAX_SIZE);
 #else
-std::uniform_int_distribution<sp::size_t> uid(1, 100);
+std::uniform_int_distribution<int64_t> uid(1, 100);
 #endif
 
 #ifdef LOOP_COUNT
@@ -58,7 +58,7 @@ TEST(VectorTest, ctor_default) {
 }
 
 // TEST(VectorTest, ctor_size_alloc_not_default) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<not_safe> not_default("name");
 //   const TargetVector<not_safe, state_allocator<not_safe>> vec(size,
 //                                                               not_default);
@@ -72,7 +72,7 @@ TEST(VectorTest, ctor_default) {
 // }
 
 TEST(VectorTest, ctor_size) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetVector<not_safe> vec(size);
 
   ASSERT_EQ(vec.size(), size);
@@ -97,7 +97,7 @@ TEST(VectorTest, ctor_size_neg) {
 }
 
 TEST(VectorTest, ctor_size_value) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetVector<no_def> vec(size, no_def("not default"));
 
   ASSERT_EQ(vec.size(), size);
@@ -122,14 +122,14 @@ TEST(VectorTest, ctor_size_value_neg) {
 
 TEST(VectorTest, ctor_size_value_throwing) {
   throwing::count = 0;
-  sp::size_t size = uid(gen) + 5;
+  int64_t size = uid(gen) + 5;
   std::allocator<throwing> not_default;
   ASSERT_ANY_THROW(
       TargetVector<throwing> vec(size, throwing("not default"), not_default));
 }
 
 TEST(VectorTest, ctor_from_stl_vector) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   std::vector<safe> from(size, safe("not default"));
 
   const TargetVector<safe> vec(from.begin(), from.end());
@@ -143,7 +143,7 @@ TEST(VectorTest, ctor_from_stl_vector) {
 }
 
 TEST(VectorTest, ctor_from_stl_list) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   std::list<safe> from(size, safe("not default"));
 
   const TargetVector<safe> vec(from.begin(), from.end());
@@ -212,7 +212,7 @@ TEST(VectorTest, ctor_init_list_throwing) {
 }
 
 TEST(VectorTest, ctor_copy) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetVector<safe> vec1(size, safe("not default"));
   const TargetVector<safe> vec2(vec1);
 
@@ -235,7 +235,7 @@ TEST(VectorTest, ctor_copy_size_zero) {
 }
 
 TEST(VectorTest, ctor_copy_safe_alloc_always_equal) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   std::allocator<safe> not_default;
   TargetVector<safe> vec1(size);
   const TargetVector<safe> vec2(vec1, not_default);
@@ -250,7 +250,7 @@ TEST(VectorTest, ctor_copy_safe_alloc_always_equal) {
 }
 
 // TEST(VectorTest, ctor_copy_safe_alloc_not_equal) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<safe> not_default("not_same");
 //   TargetVector<safe, state_allocator<safe>> vec1(size,
 //                                                  state_allocator<safe>("same"));
@@ -269,7 +269,7 @@ TEST(VectorTest, ctor_copy_safe_alloc_always_equal) {
 
 // TEST(VectorTest, ctor_copy_throwing_alloc_not_default) {
 //   throwing::count = 0;
-//   sp::size_t size = uid(gen) + 5;
+//   int64_t size = uid(gen) + 5;
 //   state_allocator<throwing> not_default("not default");
 //   TargetVector<throwing, state_allocator<throwing>> vec1(
 //       size, state_allocator<throwing>("default"));
@@ -288,15 +288,15 @@ TEST(VectorTest, ctor_copy_safe_alloc_always_equal) {
 
 TEST(VectorTest, ctor_copy_throwing) {
   throwing::count = 0;
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetVector<throwing> vec1(size + 5);
   ASSERT_ANY_THROW(TargetVector<throwing> vec2(vec1));
 }
 
 TEST(VectorTest, ctor_move) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<not_safe> vec1(size);
-  sp::size_t cap = vec1.capacity();
+  int64_t cap = vec1.capacity();
   not_safe* ptr = vec1.data();
   const TargetVector<not_safe> vec2(std::move(vec1));
 
@@ -310,17 +310,17 @@ TEST(VectorTest, ctor_move) {
 }
 
 TEST(VectorTest, ctor_move_throwing) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<throwing> vec1(size);
 
   ASSERT_NO_THROW(const TargetVector<throwing> vec2(std::move(vec1)););
 }
 
 TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   std::allocator<safe> not_default;
   TargetVector<safe> vec1(size);
-  sp::size_t cap = vec1.capacity();
+  int64_t cap = vec1.capacity();
   safe* ptr = vec1.data();
   const TargetVector<safe> vec2(std::move(vec1), not_default);
 
@@ -332,11 +332,11 @@ TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
 }
 
 // TEST(VectorTest, ctor_move_safe_alloc_equal) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<safe> not_default("same");
 //   TargetVector<safe, state_allocator<safe>> vec1(size,
 //                                                  state_allocator<safe>("same"));
-//   sp::size_t cap = vec1.capacity();
+//   int64_t cap = vec1.capacity();
 //   const TargetVector<safe, state_allocator<safe>> vec2(std::move(vec1),
 //                                                        not_default);
 //   ASSERT_EQ(vec2.size(), size);
@@ -351,11 +351,11 @@ TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
 // }
 
 // TEST(VectorTest, ctor_move_safe_alloc) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<safe> not_default("not default");
 //   TargetVector<safe, state_allocator<safe>> vec1(
 //       size, safe("not default"), state_allocator<safe>("default"));
-//   sp::size_t cap = vec1.capacity();
+//   int64_t cap = vec1.capacity();
 //   const TargetVector<safe, state_allocator<safe>> vec2(std::move(vec1),
 //                                                        not_default);
 //   ASSERT_EQ(vec2.size(), size);
@@ -370,11 +370,11 @@ TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
 // }
 
 // TEST(VectorTest, ctor_move_not_safe_alloc) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   state_allocator<not_safe> not_default("not default");
 //   TargetVector<not_safe, state_allocator<not_safe>> vec1(
 //       size, not_safe("not default"), state_allocator<not_safe>("default"));
-//   sp::size_t cap = vec1.capacity();
+//   int64_t cap = vec1.capacity();
 //   const TargetVector<not_safe, state_allocator<not_safe>> vec2(std::move(vec1),
 //                                                                not_default);
 
@@ -391,7 +391,7 @@ TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
 
 // TEST(VectorTest, ctor_move_throwing_alloc_not_default) {
 //   throwing::count = 0;
-//   sp::size_t size = uid(gen) + 5;
+//   int64_t size = uid(gen) + 5;
 //   state_allocator<throwing> not_default("not default");
 //   TargetVector<throwing, state_allocator<throwing>> vec1(
 //       size, state_allocator<throwing>("default"));
@@ -410,7 +410,7 @@ TEST(VectorTest, ctor_move_safe_alloc_always_equal) {
 // }
 
 TEST(VectorTest, assignment_copy) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetVector<safe> vec1(size, safe("not default"));
   TargetVector<safe> vec2;
 
@@ -427,7 +427,7 @@ TEST(VectorTest, assignment_copy) {
 
 TEST(VectorTest, assignment_copy_throwing) {
   throwing::count = 0;
-  sp::size_t size = uid(gen) + 5;
+  int64_t size = uid(gen) + 5;
   const TargetVector<throwing> vec1(size);
   TargetVector<throwing> vec2(size + 7);
 
@@ -439,16 +439,16 @@ TEST(VectorTest, assignment_copy_throwing) {
   ASSERT_NE(vec1.data(), nullptr);
   ASSERT_EQ(vec1.front(), vec2.front());
   ASSERT_EQ(vec1.back(), vec2.front());
-  for (sp::size_t i = 0; i < size; ++i) {
+  for (int64_t i = 0; i < size; ++i) {
     ASSERT_NO_THROW(vec1.at(i));
     ASSERT_NO_THROW(vec2.at(i));
   }
 }
 
 TEST(VectorTest, assignment_move) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<not_safe> vec1(size);
-  sp::size_t cap = vec1.capacity();
+  int64_t cap = vec1.capacity();
   not_safe* ptr = vec1.data();
   TargetVector<not_safe> vec2;
 
@@ -462,10 +462,10 @@ TEST(VectorTest, assignment_move) {
 }
 
 // TEST(VectorTest, assignment_move_with_alloc) {
-//   sp::size_t size = uid(gen);
+//   int64_t size = uid(gen);
 //   TargetVector<safe, state_allocator<safe>> vec1(size,
 //                                                  state_allocator<safe>("one"));
-//   sp::size_t cap = vec1.capacity();
+//   int64_t cap = vec1.capacity();
 //   TargetVector<safe, state_allocator<safe>> vec2(state_allocator<safe>("two"));
 
 //   vec2 = std::move(vec1);
@@ -541,7 +541,7 @@ TEST(VectorTest, swap) {
 //==============================================================================
 // cmp and random access
 TEST(VectorTest, comparison_1) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   const TargetVector<not_safe> vec1(size, not_safe("equal"));
   const TargetVector<not_safe> vec2(size, not_safe("equal"));
 
@@ -647,7 +647,7 @@ TEST(VectorTest, reverse_iterators) {
 //==============================================================================
 // capacity
 TEST(VectorTest, assign_gt_not_safe_1) {
-  sp::size_t size = 322;
+  int64_t size = 322;
   TargetVector<not_safe> vec(10);
 
   vec.assign(size, not_safe("tm"));
@@ -659,7 +659,7 @@ TEST(VectorTest, assign_gt_not_safe_1) {
 }
 
 TEST(VectorTest, assign_gt_not_safe_2) {
-  sp::size_t size = 13;
+  int64_t size = 13;
   TargetVector<not_safe> vec(10);
 
   vec.assign(size, not_safe("nm"));
@@ -671,7 +671,7 @@ TEST(VectorTest, assign_gt_not_safe_2) {
 }
 
 TEST(VectorTest, assign_lt_not_safe_1) {
-  sp::size_t size = 10;
+  int64_t size = 10;
   TargetVector<not_safe> vec(322);
   not_safe* ptr = vec.data();
 
@@ -686,7 +686,7 @@ TEST(VectorTest, assign_lt_not_safe_1) {
 }
 
 TEST(VectorTest, assign_lt_not_safe_2) {
-  sp::size_t size = 10;
+  int64_t size = 10;
   TargetVector<not_safe> vec(13);
   not_safe* ptr = vec.data();
 
@@ -718,7 +718,7 @@ TEST(VectorTest, assign_gt_no_realloc) {
 
 TEST(VectorTest, assign_throwing) {
   throwing::count = 0;
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<throwing> vec(size);
 
   ASSERT_ANY_THROW(vec.assign(7, throwing()));
@@ -763,7 +763,7 @@ TEST(VectorTest, assign_list_not_safe) {
 
 TEST(VectorTest, assign_list_throwing) {
   throwing::count = 0;
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<throwing> vec(size);
 
   ASSERT_ANY_THROW(vec.assign({throwing("not default"), throwing("not default"),
@@ -771,7 +771,7 @@ TEST(VectorTest, assign_list_throwing) {
                                throwing("not default")}));
 
   ASSERT_EQ(vec.size(), size);
-  for (sp::size_t i = 0; i < size; ++i) {
+  for (int64_t i = 0; i < size; ++i) {
     ASSERT_NO_THROW(vec.at(i));
   }
 }
@@ -790,8 +790,8 @@ TEST(VectorTest, assign_big_count) {
 }
 
 TEST(VectorTest, reserve_expand_safe) {
-  sp::size_t size = 10;
-  sp::size_t re_cap = 40;
+  int64_t size = 10;
+  int64_t re_cap = 40;
 
   TargetVector<safe> vec(size);
 
@@ -805,8 +805,8 @@ TEST(VectorTest, reserve_expand_safe) {
 }
 
 TEST(VectorTest, reserve_expand_not_safe) {
-  sp::size_t size = 10;
-  sp::size_t re_cap = 40;
+  int64_t size = 10;
+  int64_t re_cap = 40;
 
   TargetVector<not_safe> vec(size);
 
@@ -821,10 +821,10 @@ TEST(VectorTest, reserve_expand_not_safe) {
 
 TEST(VectorTest, reserve_expand_throwing) {
   throwing::count = 0;
-  sp::size_t size = 5;
+  int64_t size = 5;
   TargetVector<throwing> vec(size);
 
-  sp::size_t old_cap = vec.capacity();
+  int64_t old_cap = vec.capacity();
 
   ASSERT_ANY_THROW(vec.reserve(17));
 
@@ -837,7 +837,7 @@ TEST(VectorTest, reserve_expand_throwing) {
 TEST(VectorTest, reserve_shrink) {
   throwing::count = 0;
 
-  sp::size_t size = 10;
+  int64_t size = 10;
   TargetVector<throwing> vec(size);
   throwing* ptr = vec.data();
   vec.reserve(7);
@@ -862,8 +862,8 @@ TEST(VectorTest, reserve_invalid) {
 
 TEST(VectorTest, reserve_random) {
   for (int i = 0; i < loop; ++i) {
-    sp::size_t size = uid(gen);
-    sp::size_t re_cap = uid(gen);
+    int64_t size = uid(gen);
+    int64_t re_cap = uid(gen);
 
     TargetVector<not_safe> vec(size, not_safe("rand"));
 
@@ -906,7 +906,7 @@ TEST(VectorTest, stf_throwing) {
   TargetVector<throwing> vec(4);
 
   vec.reserve(10);
-  sp::size_t old_cap = vec.capacity();
+  int64_t old_cap = vec.capacity();
   ASSERT_ANY_THROW(vec.shrink_to_fit());
   ASSERT_EQ(vec.capacity(), old_cap);
 }
@@ -921,36 +921,36 @@ TEST(VectorTest, clear) {
 }
 
 TEST(VectorTest, resize_expand_not_safe) {
-  sp::size_t size = 10;
-  sp::size_t re_size = 15;
+  int64_t size = 10;
+  int64_t re_size = 15;
   TargetVector<not_safe> vec(size, not_safe("default"));
 
   vec.resize(re_size, not_safe("appended"));
 
   ASSERT_EQ(re_size, vec.size());
-  for (sp::size_t j = 0; j < size; ++j) {
+  for (int64_t j = 0; j < size; ++j) {
     ASSERT_EQ(vec[j], not_safe("default"));
     ASSERT_EQ(vec[j].birth, constructed::kCopy);
   }
-  for (sp::size_t j = size; j < re_size; ++j) {
+  for (int64_t j = size; j < re_size; ++j) {
     ASSERT_EQ(vec[j], not_safe("appended"));
     ASSERT_EQ(vec[j].birth, constructed::kCopy);
   }
 }
 
 TEST(VectorTest, resize_expand_safe) {
-  sp::size_t size = 10;
-  sp::size_t re_size = 77;
+  int64_t size = 10;
+  int64_t re_size = 77;
   TargetVector<safe> vec(size, safe("default"));
 
   vec.resize(re_size, safe("appended"));
 
   ASSERT_EQ(re_size, vec.size());
-  for (sp::size_t j = 0; j < size; ++j) {
+  for (int64_t j = 0; j < size; ++j) {
     ASSERT_EQ(vec[j], safe("default"));
     ASSERT_EQ(vec[j].birth, constructed::kMove);
   }
-  for (sp::size_t j = size; j < re_size; ++j) {
+  for (int64_t j = size; j < re_size; ++j) {
     ASSERT_EQ(vec[j], safe("appended"));
     ASSERT_EQ(vec[j].birth, constructed::kCopy);
   }
@@ -958,7 +958,7 @@ TEST(VectorTest, resize_expand_safe) {
 
 TEST(VectorTest, resize_expand_throwing) {
   throwing::count = 0;
-  sp::size_t size = 3;
+  int64_t size = 3;
   TargetVector<throwing> vec(size);
   ASSERT_ANY_THROW(vec.resize(10, throwing("appended")));
   ASSERT_EQ(size, vec.size());
@@ -977,10 +977,10 @@ TEST(VectorTest, resize_expand_throwing) {
 }
 
 TEST(VectorTest, resize_shrink) {
-  sp::size_t size = 77;
-  sp::size_t re_size = 23;
+  int64_t size = 77;
+  int64_t re_size = 23;
   TargetVector<not_safe> vec(size);
-  sp::size_t old_cap = vec.capacity();
+  int64_t old_cap = vec.capacity();
   not_safe* ptr = vec.data();
 
   vec.resize(re_size);
@@ -997,9 +997,9 @@ TEST(VectorTest, resize_shrink) {
 
 TEST(VectorTest, resize_shrink_throwing) {
   throwing::count = 0;
-  sp::size_t re_size = 5;
+  int64_t re_size = 5;
   TargetVector<throwing> vec(17);
-  sp::size_t old_cap = vec.capacity();
+  int64_t old_cap = vec.capacity();
 
   ASSERT_NO_THROW(vec.resize(re_size));
   ASSERT_EQ(re_size, vec.size());
@@ -1022,18 +1022,18 @@ TEST(VectorTest, resize_expand_no_realloc) {
   ASSERT_EQ(vec.capacity(), 40);
   ASSERT_EQ(vec.data(), ptr);
 
-  for (sp::size_t j = 0; j < 10; ++j) {
+  for (int64_t j = 0; j < 10; ++j) {
     ASSERT_EQ(vec[j], safe("default"));
     ASSERT_EQ(vec[j].birth, constructed::kDef);
   }
-  for (sp::size_t j = 10; j < 30; ++j) {
+  for (int64_t j = 10; j < 30; ++j) {
     ASSERT_EQ(vec[j], safe("appended"));
   }
 }
 
 TEST(VectorTest, resize_zero) {
   TargetVector<not_safe> vec(uid(gen));
-  sp::size_t old_cap = vec.capacity();
+  int64_t old_cap = vec.capacity();
   not_safe* ptr = vec.data();
   vec.resize(0);
   ASSERT_EQ(0, vec.size());
@@ -1048,17 +1048,17 @@ TEST(VectorTest, resize_invalid) {
 
 TEST(VectorTest, resize_random) {
   for (int i = 0; i < loop; ++i) {
-    sp::size_t size = uid(gen);
-    sp::size_t re_size = uid(gen);
+    int64_t size = uid(gen);
+    int64_t re_size = uid(gen);
     TargetVector<not_safe> vec(size, not_safe("default"));
 
     vec.resize(re_size, not_safe("appended"));
 
     ASSERT_EQ(re_size, vec.size());
-    for (sp::size_t j = 0; j < size && j < re_size; ++j) {
+    for (int64_t j = 0; j < size && j < re_size; ++j) {
       ASSERT_EQ(vec[j], not_safe("default"));
     }
-    for (sp::size_t j = std::min(size, re_size); j < re_size; ++j) {
+    for (int64_t j = std::min(size, re_size); j < re_size; ++j) {
       ASSERT_EQ(vec[j], not_safe("appended"));
     }
   }
@@ -1069,7 +1069,7 @@ TEST(VectorTest, resize_random) {
 TEST(VectorTest, insert_continious) {
   not_safe insert_val("inserted");
   TargetVector<not_safe> vec(60);
-  sp::size_t insert = 0;
+  int64_t insert = 0;
   for (int i = 0; i < loop; ++i, insert += 4) {
     auto pos = vec.insert(vec.begin() + insert, insert_val);
     ASSERT_EQ(pos, vec.begin() + insert);
@@ -1079,7 +1079,7 @@ TEST(VectorTest, insert_continious) {
 
 TEST(VectorTest, insert_not_safe) {
   TargetVector<not_safe> vec(60);
-  sp::size_t insert = 8;
+  int64_t insert = 8;
   auto pos = vec.insert(vec.begin() + insert, not_safe("inserted"));
   ASSERT_EQ(pos, vec.begin() + insert);
   ASSERT_EQ(*pos, not_safe("inserted"));
@@ -1095,7 +1095,7 @@ TEST(VectorTest, insert_not_safe) {
 
 TEST(VectorTest, insert_safe) {
   TargetVector<safe> vec(60);
-  sp::size_t insert = 47;
+  int64_t insert = 47;
   auto pos = vec.insert(vec.begin() + insert, safe("inserted"));
   ASSERT_EQ(pos, vec.begin() + insert);
   ASSERT_EQ(*pos, safe("inserted"));
@@ -1122,7 +1122,7 @@ TEST(VectorTest, insert_empty) {
 
 TEST(VectorTest, insert_throwing) {
   throwing::count = 0;
-  sp::size_t size = 4;
+  int64_t size = 4;
   throwing insert_val("inserted");
   TargetVector<throwing> vec(size);
   ASSERT_ANY_THROW(vec.insert(vec.begin(), throwing("face")));
@@ -1140,9 +1140,9 @@ TEST(VectorTest, insert_throwing) {
 }
 
 TEST(VectorTest, insert_safe_counted) {
-  sp::size_t insert = 47;
-  sp::size_t size = 60;
-  sp::size_t count = 8;
+  int64_t insert = 47;
+  int64_t size = 60;
+  int64_t count = 8;
   TargetVector<safe> vec(size);
 
   auto pos = vec.insert(vec.begin() + insert, count, safe("inserted"));
@@ -1167,9 +1167,9 @@ TEST(VectorTest, insert_safe_counted) {
 }
 
 TEST(VectorTest, insert_not_safe_counted) {
-  sp::size_t insert = 8;
-  sp::size_t size = 60;
-  sp::size_t count = 67;
+  int64_t insert = 8;
+  int64_t size = 60;
+  int64_t count = 67;
   TargetVector<not_safe> vec(size);
 
   auto pos = vec.insert(vec.begin() + insert, count, not_safe("inserted"));
@@ -1198,8 +1198,8 @@ TEST(VectorTest, insert_counted_no_realloc) {
   safe* ptr = vec.data();
   vec.resize(25);
 
-  sp::size_t insert = 8;
-  sp::size_t count = 9;
+  int64_t insert = 8;
+  int64_t count = 9;
 
   auto pos = vec.insert(vec.begin() + insert, count, safe("inserted"));
 
@@ -1221,7 +1221,7 @@ TEST(VectorTest, insert_counted_no_realloc) {
 
 TEST(VectorTest, insert_counted_throwing) {
   throwing::count = 0;
-  sp::size_t size = 4;
+  int64_t size = 4;
   throwing insert_val("inserted");
   TargetVector<throwing> vec(size);
   throwing* ptr = vec.data();
@@ -1248,15 +1248,15 @@ TEST(VectorTest, insert_counted_throwing) {
 }
 
 TEST(VectorTest, insert_range_safe) {
-  sp::size_t size = 60;
+  int64_t size = 60;
   TargetVector<safe> vec(size);
   std::vector<safe> range(size, safe("inserted"));
 
-  sp::size_t start = 8;
-  sp::size_t finish = 24;
-  sp::size_t count = finish - start;
+  int64_t start = 8;
+  int64_t finish = 24;
+  int64_t count = finish - start;
 
-  sp::size_t insert = 16;
+  int64_t insert = 16;
 
   auto pos = vec.insert(vec.begin() + insert, range.begin() + start,
                         range.begin() + finish);
@@ -1280,15 +1280,15 @@ TEST(VectorTest, insert_range_safe) {
 }
 
 TEST(VectorTest, insert_range_not_safe) {
-  sp::size_t size = 60;
+  int64_t size = 60;
   TargetVector<not_safe> vec(size);
   std::vector<not_safe> range(size, not_safe("inserted"));
 
-  sp::size_t start = 8;
-  sp::size_t finish = 24;
-  sp::size_t count = finish - start;
+  int64_t start = 8;
+  int64_t finish = 24;
+  int64_t count = finish - start;
 
-  sp::size_t insert = 16;
+  int64_t insert = 16;
 
   auto pos = vec.insert(vec.begin() + insert, range.begin() + start,
                         range.begin() + finish);
@@ -1312,17 +1312,17 @@ TEST(VectorTest, insert_range_not_safe) {
 }
 
 TEST(VectorTest, insert_range_no_realloc) {
-  sp::size_t size = 60;
+  int64_t size = 60;
   TargetVector<safe> vec(size);
   std::vector<safe> range(size, safe("inserted"));
 
   vec.resize(10);
 
-  sp::size_t start = 8;
-  sp::size_t finish = 24;
-  sp::size_t count = finish - start;
+  int64_t start = 8;
+  int64_t finish = 24;
+  int64_t count = finish - start;
 
-  sp::size_t insert = 6;
+  int64_t insert = 6;
 
   auto pos = vec.insert(vec.begin() + insert, range.begin() + start,
                         range.begin() + finish);
@@ -1343,11 +1343,11 @@ TEST(VectorTest, insert_range_no_realloc) {
 
 TEST(VectorTest, insert_range_throwing) {
   throwing::count = 0;
-  sp::size_t size = 4;
+  int64_t size = 4;
   TargetVector<throwing> vec(size);
   std::vector<throwing> range(10);
-  sp::size_t start = 2;
-  sp::size_t finish = start + 5;
+  int64_t start = 2;
+  int64_t finish = start + 5;
   ASSERT_ANY_THROW(
       vec.insert(vec.begin(), range.begin() + start, range.begin() + finish));
   ASSERT_EQ(vec.size(), size);
@@ -1366,10 +1366,10 @@ TEST(VectorTest, insert_range_throwing) {
 
 TEST(VectorTest, insert_list_safe) {
   for (int i = 0; i < loop; ++i) {
-    sp::size_t size = uid(gen) + 3;
+    int64_t size = uid(gen) + 3;
     TargetVector<safe> vec(size);
 
-    sp::size_t insert = 2;
+    int64_t insert = 2;
 
     auto pos =
         vec.insert(vec.begin() + insert,
@@ -1394,11 +1394,11 @@ TEST(VectorTest, insert_list_safe) {
 
 TEST(VectorTest, insert_list_not_safe) {
   for (int i = 0; i < loop; ++i) {
-    sp::size_t size = uid(gen);
+    int64_t size = uid(gen);
     TargetVector<not_safe> vec(size);
-    std::uniform_int_distribution<sp::size_t> uid_vec(1, size);
+    std::uniform_int_distribution<int64_t> uid_vec(1, size);
 
-    sp::size_t insert = uid_vec(gen);
+    int64_t insert = uid_vec(gen);
 
     auto pos = vec.insert(
         vec.begin() + insert,
@@ -1424,7 +1424,7 @@ TEST(VectorTest, insert_list_not_safe) {
 TEST(VectorTest, erase_not_safe) {
   for (int i = 0; i < loop; ++i) {
     TargetVector<not_safe> vec(uid(gen));
-    std::uniform_int_distribution<sp::size_t> uid_vec(0, vec.size() - 1);
+    std::uniform_int_distribution<int64_t> uid_vec(0, vec.size() - 1);
     auto pos = vec.begin() + uid_vec(gen);
     pos = vec.insert(pos, not_safe("inserted"));
     vec.erase(pos);
@@ -1438,7 +1438,7 @@ TEST(VectorTest, erase_not_safe) {
 TEST(VectorTest, erase_safe) {
   for (int i = 0; i < loop; ++i) {
     TargetVector<safe> vec(uid(gen));
-    std::uniform_int_distribution<sp::size_t> uid_vec(0, vec.size() - 1);
+    std::uniform_int_distribution<int64_t> uid_vec(0, vec.size() - 1);
     auto pos = vec.begin() + uid_vec(gen);
     pos = vec.insert(pos, safe("inserted"));
     vec.erase(pos);
@@ -1451,7 +1451,7 @@ TEST(VectorTest, erase_safe) {
 
 TEST(VectorTest, erase_throwing) {
   throwing::count = 0;
-  sp::size_t size = uid(gen) + 10;
+  int64_t size = uid(gen) + 10;
   TargetVector<throwing> vec(size);
   ASSERT_ANY_THROW(vec.erase(vec.begin() + 7));
   ASSERT_EQ(vec.size(), size);
@@ -1467,7 +1467,7 @@ TEST(VectorTest, erase_throwing) {
 }
 
 TEST(VectorTest, erase_to_empty) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<safe> vec(size);
   for (int i = 0; i < size; ++i) {
     vec.erase(vec.begin());
@@ -1476,7 +1476,7 @@ TEST(VectorTest, erase_to_empty) {
 }
 
 TEST(VectorTest, erase_last) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<safe> vec(size);
   auto pos = vec.end() - 1;
   pos = vec.erase(pos);
@@ -1486,10 +1486,10 @@ TEST(VectorTest, erase_last) {
 
 TEST(VectorTest, erase_range_safe) {
   TargetVector<safe> vec(10);
-  sp::size_t start = 2;
-  sp::size_t finish = 6;
-  sp::size_t n_size = vec.size() - (finish - start);
-  sp::size_t cap = vec.capacity();
+  int64_t start = 2;
+  int64_t finish = 6;
+  int64_t n_size = vec.size() - (finish - start);
+  int64_t cap = vec.capacity();
 
   auto it = vec.erase(vec.begin() + start, vec.begin() + finish);
 
@@ -1506,10 +1506,10 @@ TEST(VectorTest, erase_range_not_safe) {
                              not_safe("erase"),    not_safe("erase"),
                              not_safe("erase"),    not_safe("erase"),
                              not_safe("no erase"), not_safe("no erase")};
-  sp::size_t start = 2;
-  sp::size_t finish = 6;
-  sp::size_t n_size = vec.size() - (finish - start);
-  sp::size_t cap = vec.capacity();
+  int64_t start = 2;
+  int64_t finish = 6;
+  int64_t n_size = vec.size() - (finish - start);
+  int64_t cap = vec.capacity();
 
   auto it = vec.erase(vec.begin() + start, vec.begin() + finish);
 
@@ -1523,9 +1523,9 @@ TEST(VectorTest, erase_range_not_safe) {
 
 TEST(VectorTest, erase_range_throwing) {
   TargetVector<throwing> vec(10);
-  sp::size_t start = 2;
-  sp::size_t finish = 4;
-  sp::size_t cap = vec.capacity();
+  int64_t start = 2;
+  int64_t finish = 4;
+  int64_t cap = vec.capacity();
 
   ASSERT_ANY_THROW(vec.erase(vec.begin() + start, vec.begin() + finish));
 
@@ -1536,9 +1536,9 @@ TEST(VectorTest, erase_range_throwing) {
 TEST(VectorTest, erase_range_end) {
   for (int i = 0; i < loop; ++i) {
     TargetVector<safe> vec(uid(gen), safe("default"));
-    std::uniform_int_distribution<sp::size_t> uid_vec(0, vec.size());
+    std::uniform_int_distribution<int64_t> uid_vec(0, vec.size());
     auto pos = vec.begin() + uid_vec(gen);
-    sp::size_t n_size = vec.size() - (vec.end() - pos);
+    int64_t n_size = vec.size() - (vec.end() - pos);
 
     pos = vec.erase(pos, vec.end());
 
@@ -1554,8 +1554,8 @@ TEST(VectorTest, erase_range_entire) {
 }
 
 TEST(VectorTest, erase_range_empty) {
-  for (sp::size_t i = 0; i < loop; ++i) {
-    sp::size_t size = uid(gen) + 1;
+  for (int64_t i = 0; i < loop; ++i) {
+    int64_t size = uid(gen) + 1;
     TargetVector<safe> vec(size);
     auto pos = vec.erase(vec.begin() + 1, vec.begin() + 1);
     ASSERT_EQ(pos, vec.begin() + 1);
@@ -1570,7 +1570,7 @@ TEST(VectorTest, push_back_not_safe) {
   vec.push_back(push_value);
 
   ASSERT_EQ(vec.back(), push_value);
-  for (sp::size_t i = 0; i < vec.size(); ++i) {
+  for (int64_t i = 0; i < vec.size(); ++i) {
     ASSERT_EQ(vec[i].birth, constructed::kCopy);
   }
 }
@@ -1581,7 +1581,7 @@ TEST(VectorTest, push_back_safe) {
   vec.push_back(safe("pushed"));
 
   ASSERT_EQ(vec.back(), safe("pushed"));
-  for (sp::size_t i = 0; i < vec.size(); ++i) {
+  for (int64_t i = 0; i < vec.size(); ++i) {
     ASSERT_EQ(vec[i].birth, constructed::kMove);
   }
 }
@@ -1598,7 +1598,7 @@ TEST(VectorTest, push_back_continious) {
 
 TEST(VectorTest, push_back_throwing) {
   throwing::count = 0;
-  sp::size_t size = 4;
+  int64_t size = 4;
   throwing push_value("pushed");
   TargetVector<throwing> vec(size);
   ASSERT_ANY_THROW(vec.push_back(push_value));
@@ -1624,7 +1624,7 @@ TEST(VectorTest, pop_back_same_vector) {
 }
 
 TEST(VectorTest, pop_back_to_empty) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<safe> vec(size);
   for (int i = 0; i < size; ++i) {
     vec.pop_back();
@@ -1635,7 +1635,7 @@ TEST(VectorTest, pop_back_to_empty) {
 TEST(VectorTest, emplace_not_safe) {
   TargetVector<not_safe> vec(54);
   not_safe value("inserted");
-  sp::size_t insert = 31;
+  int64_t insert = 31;
 
   auto pos = vec.emplace(vec.begin() + insert, value);
 
@@ -1655,7 +1655,7 @@ TEST(VectorTest, emplace_not_safe) {
 
 TEST(VectorTest, emplace_safe) {
   TargetVector<safe> vec(54);
-  sp::size_t insert = 31;
+  int64_t insert = 31;
 
   auto pos = vec.emplace(vec.begin() + insert, safe("inserted"));
 
@@ -1678,7 +1678,7 @@ TEST(VectorTest, emplace_no_realloc) {
   safe* ptr = vec.data();
   vec.resize(50);
 
-  sp::size_t insert = 31;
+  int64_t insert = 31;
 
   auto pos = vec.emplace(vec.begin() + insert, "inserted");
 
@@ -1705,7 +1705,7 @@ TEST(VectorTest, emplace_no_def) {
 
 TEST(VectorTest, emplace_throwing) {
   throwing::count = 0;
-  sp::size_t size = 4;
+  int64_t size = 4;
   TargetVector<throwing> vec(size);
   throwing value("pushed");
   ASSERT_ANY_THROW(vec.emplace(vec.begin(), value));
@@ -1732,16 +1732,16 @@ TEST(VectorTest, emplace_back_from_begin_safe) {
 }
 
 TEST(VectorTest, emplace_back_continious_safe) {
-  sp::size_t size = uid(gen);
+  int64_t size = uid(gen);
   TargetVector<safe> vec(size, safe("default"));
-  for (sp::size_t i = 0; i < size; ++i) {
+  for (int64_t i = 0; i < size; ++i) {
     vec.emplace_back(std::move(vec[i]));
   }
   ASSERT_EQ(vec.size(), size * 2);
-  for (sp::size_t i = 0; i < size; ++i) {
+  for (int64_t i = 0; i < size; ++i) {
     ASSERT_NE(vec[i], safe("default"));
   }
-  for (sp::size_t i = size; i < 2 * size; ++i) {
+  for (int64_t i = size; i < 2 * size; ++i) {
     ASSERT_EQ(vec[i], safe("default"));
   }
 }
@@ -1752,7 +1752,7 @@ TEST(VectorTest, emplace_back_safe) {
   safe& val = vec.emplace_back("default");
   ASSERT_EQ(val, safe("default"));
   ASSERT_EQ(val.birth, constructed::kParam);
-  for (sp::size_t i = 0; i < vec.size() - 1; ++i) {
+  for (int64_t i = 0; i < vec.size() - 1; ++i) {
     ASSERT_EQ(vec[i].birth, constructed::kMove);
   }
 }
@@ -1763,7 +1763,7 @@ TEST(VectorTest, emplace_back_not_safe) {
   not_safe& val = vec.emplace_back("default");
   ASSERT_EQ(val, not_safe("default"));
   ASSERT_EQ(val.birth, constructed::kParam);
-  for (sp::size_t i = 0; i < vec.size() - 1; ++i) {
+  for (int64_t i = 0; i < vec.size() - 1; ++i) {
     ASSERT_EQ(vec[i].birth, constructed::kCopy);
   }
 }
@@ -1775,14 +1775,14 @@ TEST(VectorTest, emplace_back_no_realloc) {
   safe& val = vec.emplace_back("default");
   ASSERT_EQ(val, safe("default"));
   ASSERT_EQ(val.birth, constructed::kParam);
-  for (sp::size_t i = 0; i < vec.size() - 1; ++i) {
+  for (int64_t i = 0; i < vec.size() - 1; ++i) {
     ASSERT_EQ(vec[i].birth, constructed::kDef);
   }
 }
 
 TEST(VectorTest, emplace_back_throwing) {
   throwing::count = 0;
-  sp::size_t size = 7;
+  int64_t size = 7;
   TargetVector<throwing> vec(size);
   ASSERT_ANY_THROW(vec.emplace(vec.begin(), "pushed"));
   ASSERT_EQ(vec.size(), size);

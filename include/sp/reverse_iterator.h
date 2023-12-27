@@ -1,6 +1,6 @@
 #ifndef SP_CONTAINERS_REVERSE_ITERATOR_H_
 #define SP_CONTAINERS_REVERSE_ITERATOR_H_
-#include <cstdint>
+#include <cstdint>  // int64_t
 
 namespace sp {
 

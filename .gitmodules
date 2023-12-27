@@ -1,0 +1,3 @@
+[submodule "external/memory"]
+	path = external/memory
+	url = git@github.com:DLWHI/memory.git
