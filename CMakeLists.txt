@@ -12,23 +12,23 @@ include(EnableGoogleTest)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 # valgrind  --tool=memcheck --track-fds=yes --trace-children=yes --track-origins=yes --leak-check=full --show-leak-kinds=all -s --log-file=leak_report.txt ./test_vector
-  add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -g)
-  # add_link_options(-fsanitize=address)
+  add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -g -fsanitize=address)
+  add_link_options(-fsanitize=address)
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang") 
   add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -O3)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   add_compile_options(/W4 /EHsc /fsanitize=address)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-  add_compile_options(-Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -O3)
-  # add_link_options(-fsanitize=address)
+  add_compile_options(-g -Wall -Werror -Wextra -Wimplicit-fallthrough -Wpedantic -fsanitize=address)
+  add_link_options(-fsanitize=address)
 endif()
 
 
 add_executable(
   unit_tests
-  tests/test_array.cc
+  tests/self/test_array.cc
   # tests/test_list.cc
-  tests/test_vector.cc
+  tests/self/test_vector.cc
 )
 
 target_include_directories(unit_tests PUBLIC include)
@@ -39,3 +39,18 @@ target_link_libraries(
   GTest::gtest_main
 )
 gtest_discover_tests(unit_tests)
+
+
+add_executable(
+  unit_tests_standart
+  tests/standart/test_vector_standart.cc
+)
+
+target_include_directories(unit_tests_standart PUBLIC include)
+target_include_directories(unit_tests_standart PUBLIC external/memory/include)
+
+target_link_libraries(
+  unit_tests_standart
+  GTest::gtest_main
+)
+gtest_discover_tests(unit_tests_standart)

@@ -1,14 +1,14 @@
 #ifndef SP_CONTAINERS_VECTOR_H_
 #define SP_CONTAINERS_VECTOR_H_
 
+#include <sp/pointer_iterator.h>  // iterator and std::distance
+#include <sp/reverse_iterator.h>
+
 #include <cstdint>      // int64_t
 #include <ostream>      // operator<<
 #include <stdexcept>    // exceptions
 #include <type_traits>  // as name suggests
 #include <utility>      // std::forward, std::swap, std::move
-
-#include <sp/pointer_iterator.h>  // iterator and std::distance
-#include <sp/reverse_iterator.h>
 
 namespace sp {
 // T type must meet requirements of Erasable
@@ -156,7 +156,7 @@ class vector {
       al_traits::propagate_on_container_move_assignment::value ||
       al_traits::is_always_equal::value) {
     if constexpr (al_traits::propagate_on_container_move_assignment::value) {
-      al_ = std::move(other.al_);
+      al_ = other.al_;
     }
     if (other.size_ > buf_.cap || !std::is_nothrow_move_assignable<T>::value) {
       pointer_buffer temp(other.buf_.cap, &al_, buf_.ptr);
@@ -560,7 +560,8 @@ class vector {
       al_traits::is_always_equal::value) {
     if constexpr (al_traits::propagate_on_container_swap::value ||
                   !al_traits::is_always_equal::value) {
-      std::swap(al_, other.al_);
+      using std::swap; 
+      swap(al_, other.al_);
     }
     buf_.swap(other.buf_);
     std::swap(size_, other.size_);
@@ -600,7 +601,8 @@ class vector {
   struct pointer_buffer {
     constexpr explicit pointer_buffer(Allocator* al = nullptr)
         : alc(al), ptr(nullptr), cap(0) {}
-    constexpr pointer_buffer(size_type size, Allocator* al, pointer hint = nullptr)
+    constexpr pointer_buffer(size_type size, Allocator* al,
+                             pointer hint = nullptr)
         : alc(al), cap(size) {
       if (cap < 0) {
         throw std::invalid_argument("Invalid memory buffer length");
@@ -613,13 +615,7 @@ class vector {
     constexpr pointer_buffer& operator=(pointer_buffer&& other) = delete;
     constexpr ~pointer_buffer() { al_traits::deallocate(*alc, ptr, cap); }
 
-    constexpr void swap(pointer_buffer& other) noexcept(
-        al_traits::propagate_on_container_swap::value ||
-        al_traits::is_always_equal::value) {
-      if constexpr (al_traits::propagate_on_container_swap::value ||
-                    !al_traits::is_always_equal::value) {
-        std::swap(alc, other.alc);
-      }
+    constexpr void swap(pointer_buffer& other) noexcept {
       std::swap(ptr, other.ptr);
       std::swap(cap, other.cap);
     }
@@ -637,7 +633,7 @@ class vector {
       for (; i < count; ++i) {
         al_traits::construct(al_, arr + i, std::forward<Args>(args)...);
       }
-    } catch (...) {
+    } catch (...) { 
       for (; i; --i) {
         al_traits::destroy(al_, arr + i - 1);
       }
@@ -657,8 +653,9 @@ class vector {
     }
   }
 
-  constexpr void move_from(pointer dest, pointer source, size_type count) noexcept(
-      std::is_nothrow_move_constructible<T>::value) {
+  constexpr void move_from(
+      pointer dest, pointer source,
+      size_type count) noexcept(std::is_nothrow_move_constructible<T>::value) {
     size_type i = 0;
     if constexpr (std::is_nothrow_move_constructible<T>::value) {
       for (; i < count; ++i)
@@ -690,8 +687,9 @@ class vector {
     size_ += offset;
   }
 
-  constexpr void split_buffer(pointer dest, size_type ind, size_type offset) noexcept(
-      std::is_nothrow_move_constructible<T>::value) {
+  constexpr void split_buffer(
+      pointer dest, size_type ind,
+      size_type offset) noexcept(std::is_nothrow_move_constructible<T>::value) {
     size_type lim = std::min(ind, ind + offset);
     move_from(dest, buf_.ptr, lim);
     try {
