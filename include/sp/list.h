@@ -86,14 +86,14 @@ class list {
   }
 
   list(list&& other, const Allocator& al) : list(al) {
-    if (al == other.al_) {
-      swap(other);
-    } else {
-      pointer_buffer temp(other.size_, &al_);
-      move_from(temp.ptr, other.buf_.ptr, other.size_);
-      buf_.swap(temp);
-      size_ = other.size_;
-    }
+    // if (al == other.al_) {
+    //   swap(other);
+    // } else {
+    //   pointer_buffer temp(other.size_, &al_);
+    //   move_from(temp.ptr, other.buf_.ptr, other.size_);
+    //   buf_.swap(temp);
+    //   size_ = other.size_;
+    // }
     std::swap(size_, other.size_);
     std::swap(head_, other.head_);
   }

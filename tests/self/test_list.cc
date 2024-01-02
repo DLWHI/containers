@@ -1,13 +1,15 @@
 #include <list>
 #include <random>
 #include <sstream>
+#include <sp/pool_allocator.h>
+#include <sp/reserving_allocator.h>
 
 #include "gtest/gtest.h"
-#include "sp/list.h"
+// #include "sp/list.h"
 #include "test_helpers.h"
 
 template <typename T, typename Al = std::allocator<T>>
-using TargetList = sp::list<T, Al>;
+using TargetList = std::list<T, Al>;
 
 std::random_device ran_dev;
 std::mt19937 gen(ran_dev());
@@ -30,18 +32,19 @@ TEST(ListTest, ctor_default) {
   ASSERT_TRUE(lst.empty());
 }
 
-// TEST(ListTest, ctor_size_alloc_not_default) {
-//   int64_t size = uid(gen);
-//   state_allocator<safe> not_default;
-//   TargetList<safe, state_allocator<safe>> lst(size, not_default);
+TEST(ListTest, ctor_size_alloc_not_default) {
+  int64_t size = uid(gen);
+  sp::reserving_allocator<safe> not_default;
+  not_default.populate(63);
+  TargetList<safe, sp::reserving_allocator<safe>> lst(size, not_default);
 
-//   ASSERT_EQ(lst.size(), size);
-//   ASSERT_EQ(lst.front(), safe());
-//   ASSERT_EQ(lst.back(), safe());
-//   ASSERT_EQ(lst.front().birth, constructed::kDef);
-//   ASSERT_EQ(lst.back().birth, constructed::kDef);
-//   ASSERT_EQ(lst.get_allocator(), not_default);
-// }
+  ASSERT_EQ(lst.size(), size);
+  ASSERT_EQ(lst.front(), safe());
+  ASSERT_EQ(lst.back(), safe());
+  ASSERT_EQ(lst.front().birth, constructed::kDef);
+  ASSERT_EQ(lst.back().birth, constructed::kDef);
+  ASSERT_EQ(lst.get_allocator(), not_default);
+}
 
 TEST(ListTest, ctor_size) {
   int64_t size = uid(gen);
@@ -55,7 +58,7 @@ TEST(ListTest, ctor_size) {
 TEST(ListTest, ctor_size_value) {
   int64_t size = uid(gen);
 
-  const sp::list<safe> lst(size, safe("not defult"));
+  const TargetList<safe> lst(size, safe("not defult"));
   ASSERT_EQ(lst.size(), size);
   ASSERT_FALSE(lst.empty());
   ASSERT_EQ(lst.front(), safe("not defult"));
@@ -67,7 +70,7 @@ TEST(ListTest, ctor_from_stl_list) {
 
   std::list<safe> from(size, safe("not default"));
 
-  sp::list<safe> lst(from.begin(), from.end());
+  TargetList<safe> lst(from.begin(), from.end());
 
   ASSERT_EQ(lst.size(), from.size());
   ASSERT_EQ(lst.front(), from.front());
@@ -75,29 +78,17 @@ TEST(ListTest, ctor_from_stl_list) {
 }
 
 TEST(ListTest, ctor_init_list) {
-  std::initializer_list<std::string> list{
-    "Karen",
-    "Anastasia",
-    "Alice",
-    "Natalie",
-    "Leyla",
-    "Victoria"
-  };
+  std::initializer_list<std::string> list{"Karen",   "Anastasia", "Alice",
+                                          "Natalie", "Leyla",     "Victoria"};
 
-  sp::list<std::string> lst(list);
+  TargetList<std::string> lst(list);
   ASSERT_EQ(lst.size(), list.size());
   ASSERT_EQ(lst.front(), "Karen");
 }
 
 TEST(ListTest, ctor_init_list_implicit) {
-  sp::list<std::string> lst{
-    "Karen",
-    "Anastasia",
-    "Alice",
-    "Natalie",
-    "Leyla",
-    "Victoria"
-  };
+  TargetList<std::string> lst{"Karen",   "Anastasia", "Alice",
+                            "Natalie", "Leyla",     "Victoria"};
 
   ASSERT_EQ(lst.size(), 6);
   ASSERT_EQ(lst.front(), "Karen");
@@ -105,8 +96,8 @@ TEST(ListTest, ctor_init_list_implicit) {
 
 TEST(ListTest, ctor_copy) {
   int64_t size = uid(gen);
-  sp::list<safe> lst1(size, safe("not default"));
-  sp::list<safe> lst2(lst1);
+  TargetList<safe> lst1(size, safe("not default"));
+  TargetList<safe> lst2(lst1);
 
   ASSERT_EQ(lst1.size(), lst2.size());
   ASSERT_EQ(lst1.front(), lst2.front());
@@ -115,8 +106,8 @@ TEST(ListTest, ctor_copy) {
 
 TEST(ListTest, ctor_move) {
   int64_t size = uid(gen);
-  sp::list<safe> lst1(size, safe("not default"));
-  sp::list<safe> lst2(std::move(lst1));
+  TargetList<safe> lst1(size, safe("not default"));
+  TargetList<safe> lst2(std::move(lst1));
 
   ASSERT_EQ(lst2.size(), size);
   ASSERT_EQ(lst2.front(), safe("not default"));
@@ -126,8 +117,8 @@ TEST(ListTest, ctor_move) {
 // TEST(ListTest, ctor_move_alloc_not_default) {
 //   int64_t size = uid(gen);
 //   state_allocator<safe> not_default("not default");
-//   sp::list<safe, state_allocator<safe>> lst1(size, safe("not default"),
-//   state_allocator<safe>("default")); sp::list<safe, state_allocator<safe>>
+//   TargetList<safe, state_allocator<safe>> lst1(size, safe("not default"),
+//   state_allocator<safe>("default")); TargetList<safe, state_allocator<safe>>
 //   lst2(std::move(lst1), not_default);
 
 //   ASSERT_EQ(lst2.size(), size);
@@ -138,8 +129,8 @@ TEST(ListTest, ctor_move) {
 
 // TEST(ListTest, ctor_ass_copy) {
 //   int64_t size = uid(gen);
-//   sp::list<safe> lst1(size, safe("not default"));
-//   sp::list<safe> lst2;
+//   TargetList<safe> lst1(size, safe("not default"));
+//   TargetList<safe> lst2;
 
 //   lst2 = lst1;
 
@@ -150,8 +141,8 @@ TEST(ListTest, ctor_move) {
 
 // TEST(ListTest, ctor_ass_move) {
 //   int64_t size = uid(gen);
-//   sp::list<safe> lst1(size, safe("not default"));
-//   sp::list<safe> lst2;
+//   TargetList<safe> lst1(size, safe("not default"));
+//   TargetList<safe> lst2;
 
 //   lst2 = std::move(lst1);
 
@@ -162,8 +153,8 @@ TEST(ListTest, ctor_move) {
 
 // TEST(ListTest, comparison_1) {
 //   int64_t size = uid(gen);
-//   sp::list<safe> lst1(size, safe("equal"));
-//   sp::list<safe> lst2(size, safe("equal"));
+//   TargetList<safe> lst1(size, safe("equal"));
+//   TargetList<safe> lst2(size, safe("equal"));
 
 //   ASSERT_TRUE(lst1 == lst2);
 //   ASSERT_FALSE(lst1 != lst2);
@@ -172,8 +163,8 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, comparison_2) {
-//   sp::list<safe> lst1(uid(gen), safe("not equal"));
-//   sp::list<safe> lst2(uid(gen), safe("equal"));
+//   TargetList<safe> lst1(uid(gen), safe("not equal"));
+//   TargetList<safe> lst2(uid(gen), safe("equal"));
 
 //   ASSERT_FALSE(lst1 == lst2);
 //   ASSERT_TRUE(lst1 != lst2);
@@ -182,8 +173,8 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, comparison_3) {
-//   sp::list<safe> lst1(uid(gen), safe("not equal"));
-//   sp::list<safe> lst2;
+//   TargetList<safe> lst1(uid(gen), safe("not equal"));
+//   TargetList<safe> lst2;
 
 //   ASSERT_FALSE(lst1 == lst2);
 //   ASSERT_TRUE(lst1 != lst2);
@@ -192,15 +183,15 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, comparison_self) {
-//   sp::list<safe> lst(uid(gen), safe("not equal"));
+//   TargetList<safe> lst(uid(gen), safe("not equal"));
 
 //   ASSERT_TRUE(lst == lst);
 //   ASSERT_FALSE(lst != lst);
 // }
 
 // TEST(ListTest, comparison_empty) {
-//   sp::list<safe> lst1;
-//   sp::list<safe> lst2;
+//   TargetList<safe> lst1;
+//   TargetList<safe> lst2;
 
 //   ASSERT_TRUE(lst1 == lst2);
 //   ASSERT_FALSE(lst1 != lst2);
@@ -208,7 +199,7 @@ TEST(ListTest, ctor_move) {
 
 // TEST(ListTest, clear) {
 //   for (int i = 0; i < loop; i++) {
-//     sp::list<safe> lst(uid(gen), safe("dirty"));
+//     TargetList<safe> lst(uid(gen), safe("dirty"));
 
 //     lst.clear();
 //     ASSERT_EQ(lst.size(), 0);
@@ -217,7 +208,7 @@ TEST(ListTest, ctor_move) {
 
 // TEST(ListTest, insert_movable) {
 //   for (int i = 0; i < loop; i++) {
-//     sp::list<not_safe> lst(uid(gen), not_safe("default"));
+//     TargetList<not_safe> lst(uid(gen), not_safe("default"));
 //     std::uniform_int_distribution<int64_t> uid_lst(0, lst.size());
 //     int64_t pos = uid_lst(gen);
 //     auto insert_pos = lst.begin();
@@ -228,13 +219,13 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, insert_empty_movable) {
-//   sp::list<not_safe> lst;
+//   TargetList<not_safe> lst;
 //   auto insert_pos = lst.insert(lst.begin(), not_safe("inserted"));
 //   ASSERT_EQ(insert_pos, lst.begin());
 // }
 
 // TEST(ListTest, insert_begin_movable) {
-//   sp::list<not_safe> lst(uid(gen), not_safe("default"));
+//   TargetList<not_safe> lst(uid(gen), not_safe("default"));
 //   auto insert_pos = lst.insert(lst.begin(), not_safe("inserted"));
 //   ASSERT_EQ(*insert_pos, not_safe("inserted"));
 //   ASSERT_EQ(*lst.begin(), not_safe("inserted"));
@@ -242,7 +233,7 @@ TEST(ListTest, ctor_move) {
 // }
 
 // TEST(ListTest, stream) {
-//   sp::list<not_safe> lst{
+//   TargetList<not_safe> lst{
 //       not_safe("Aileen"), not_safe("Anna"),  not_safe("Louie"),
 //       not_safe("Noel"),   not_safe("Grace"),
 //   };

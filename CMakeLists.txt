@@ -27,7 +27,7 @@ endif()
 add_executable(
   unit_tests
   tests/self/test_array.cc
-  # tests/test_list.cc
+  tests/self/test_list.cc
   tests/self/test_vector.cc
 )
 
